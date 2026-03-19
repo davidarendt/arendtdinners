@@ -22,14 +22,19 @@ function assertSupabaseConfigured() {
 
 async function supabaseRequest(method, restPath, body) {
   const { url, anonKey } = assertSupabaseConfigured();
+  const headers = {
+    apikey: anonKey,
+    Authorization: `Bearer ${anonKey}`,
+    Accept: "application/json",
+  };
+  if (body) {
+    headers["Content-Type"] = "application/json";
+    headers.Prefer =
+      restPath.includes("on_conflict=") ? "resolution=merge-duplicates,return=representation" : "return=representation";
+  }
   const response = await fetch(`${url}${restPath}`, {
     method,
-    headers: {
-      apikey: anonKey,
-      Authorization: `Bearer ${anonKey}`,
-      Accept: "application/json",
-      ...(body ? { "Content-Type": "application/json", Prefer: "return=representation" } : {}),
-    },
+    headers,
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   if (!response.ok) {

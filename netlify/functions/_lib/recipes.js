@@ -66,6 +66,14 @@ function recipesDir() {
   return path.resolve(__dirname, "..", "..", "..", "recipes", "claude");
 }
 
+function rawHtmlDir() {
+  const fromCwd = path.resolve(process.cwd(), "recipes", "raw-html");
+  if (fs.existsSync(fromCwd)) {
+    return fromCwd;
+  }
+  return path.resolve(__dirname, "..", "..", "..", "recipes", "raw-html");
+}
+
 function parseFrontmatter(lines) {
   if (lines.length < 3 || lines[0].trim() !== "---") {
     return {};
@@ -122,7 +130,7 @@ function sanitizeImageValue(image) {
   return null;
 }
 
-function loadRecipes() {
+function loadMarkdownRecipes() {
   const dir = recipesDir();
   if (!fs.existsSync(dir)) return [];
   const files = fs
@@ -154,6 +162,80 @@ function loadRecipes() {
       ingredients,
     };
   });
+}
+
+function extractJsonLd(html) {
+  const match = html.match(/<script\s+type="application\/ld\+json">([\s\S]*?)<\/script>/i);
+  if (!match) return null;
+  const raw = match[1].trim();
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.find((item) => item && item["@type"] === "Recipe") || parsed[0] || null;
+    }
+    return parsed;
+  } catch (_err) {
+    return null;
+  }
+}
+
+function extractFallbackImage(html) {
+  const match = html.match(/<img[^>]*src="([^"]+)"/i);
+  if (!match) return null;
+  return sanitizeImageValue(match[1]);
+}
+
+function loadRawHtmlRecipes() {
+  const dir = rawHtmlDir();
+  if (!fs.existsSync(dir)) return [];
+  const files = fs
+    .readdirSync(dir)
+    .filter((name) => name.toLowerCase().endsWith(".html"))
+    .sort();
+
+  const results = [];
+  for (const name of files) {
+    const abs = path.join(dir, name);
+    const html = fs.readFileSync(abs, "utf8");
+    const jsonLd = extractJsonLd(html) || {};
+    const id = name.replace(/\.html$/i, "");
+    const title = typeof jsonLd.name === "string" && jsonLd.name.trim() ? jsonLd.name.trim() : id;
+    const ingredients = Array.isArray(jsonLd.recipeIngredient)
+      ? jsonLd.recipeIngredient.filter((item) => typeof item === "string" && item.trim())
+      : [];
+    const servings = typeof jsonLd.recipeYield === "string" ? jsonLd.recipeYield.trim() : null;
+    const imageFromLd =
+      typeof jsonLd.image === "string"
+        ? jsonLd.image
+        : Array.isArray(jsonLd.image) && typeof jsonLd.image[0] === "string"
+          ? jsonLd.image[0]
+          : null;
+    const image = sanitizeImageValue(imageFromLd) || extractFallbackImage(html);
+    results.push({
+      id,
+      title,
+      servings,
+      image,
+      ingredients,
+    });
+  }
+  return results;
+}
+
+function loadRecipes() {
+  const mdRecipes = loadMarkdownRecipes();
+  const htmlRecipes = loadRawHtmlRecipes();
+  const seenTitles = new Set(mdRecipes.map((recipe) => recipe.title.toLowerCase().trim()));
+  const merged = [...mdRecipes];
+  for (const recipe of htmlRecipes) {
+    const titleKey = recipe.title.toLowerCase().trim();
+    if (seenTitles.has(titleKey)) {
+      continue;
+    }
+    seenTitles.add(titleKey);
+    merged.push(recipe);
+  }
+  return merged;
 }
 
 function normalizeName(text) {

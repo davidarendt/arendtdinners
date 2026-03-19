@@ -3,7 +3,7 @@
   functions = "netlify/functions"
 
 [functions]
-  included_files = ["recipes/claude/**/*.md"]
+  included_files = ["recipes/claude/**/*.md", "recipes/raw-html/**/*.html"]
 
 [[redirects]]
   from = "/api/recipes"

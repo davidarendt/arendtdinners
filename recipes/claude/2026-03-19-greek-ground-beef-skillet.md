@@ -6,12 +6,12 @@ servings: "4"
 prep_time: "5 minutes"
 cook_time: "20 minutes"
 tags: ["beef", "skillet", "greek", "keto", "low-carb", "one-pan"]
-image: "file:///C:/Users/David/.cursor/projects/c-Users-David-Code-Recipies/assets/c__Users_David_AppData_Roaming_Cursor_User_workspaceStorage_6639420156bbc8e4be7cf230eee09317_images_image-71117120-2f17-4a28-a87c-405b58a29d92.png"
+image: "https://closetcooking.com/wp-content/uploads/2020/01/Greek-Beef-Skillet-1200-2.jpg"
 ---
 
 # Greek Ground Beef Skillet
 
-![Greek Ground Beef Skillet](file:///C:/Users/David/.cursor/projects/c-Users-David-Code-Recipies/assets/c__Users_David_AppData_Roaming_Cursor_User_workspaceStorage_6639420156bbc8e4be7cf230eee09317_images_image-71117120-2f17-4a28-a87c-405b58a29d92.png)
+![Greek Ground Beef Skillet](https://closetcooking.com/wp-content/uploads/2020/01/Greek-Beef-Skillet-1200-2.jpg)
 
 ## Ingredients
 
