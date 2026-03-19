@@ -3,55 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meal Planner</title>
+  <title>Family Dinner Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand-wrap">
-      <div class="brand-dot"></div>
-      <div>
-        <h1>Meal Planner</h1>
-        <p>Pick dinners and generate one order list.</p>
-      </div>
-    </div>
-    <div class="topbar-actions">
-      <button id="downloadBtn" class="btn-secondary" disabled>Download List</button>
-      <button id="generateBtn" class="btn-primary" disabled>Generate Shopping List</button>
-    </div>
+  <header class="hero">
+    <h1>Ology Family Dinner Planner</h1>
+    <p>Choose meals by week, open full recipe cards, and generate one shopping list.</p>
   </header>
 
-  <main class="page">
-    <section class="panel">
-      <div class="panel-header">
-        <h2>Dinners</h2>
-        <p id="selectionCount">0 selected</p>
+  <main class="layout">
+    <section class="recipes-panel">
+      <div class="panel-head">
+        <h2>Weekly Dinner Layout</h2>
+        <p id="selectionCount" class="muted">0 selected</p>
       </div>
       <p id="stateHint" class="muted"></p>
-      <div id="recipesGrid" class="recipes-grid">
+      <div id="weeksWrap" class="weeks-wrap">
         <p class="muted">Loading recipes...</p>
       </div>
     </section>
 
-    <section class="panel">
-      <div class="panel-header">
+    <aside class="sidebar-panel">
+      <div class="actions">
+        <button id="generateBtn" class="btn-primary" disabled>Generate Shopping List</button>
+        <button id="downloadBtn" class="btn-secondary" disabled>Download List</button>
+      </div>
+      <div class="panel-head">
         <h2>Shopping List</h2>
         <p id="savedFile" class="muted">No list generated yet.</p>
       </div>
-      <div id="shoppingOutput" class="shopping-output">
+      <div id="shoppingOutput" class="shopping-output panel-surface">
         <p class="muted">Select dinners, then tap Generate Shopping List.</p>
       </div>
-    </section>
+    </aside>
   </main>
 
   <template id="recipeCardTemplate">
-    <label class="recipe-card">
-      <input class="recipe-checkbox" type="checkbox">
+    <article class="card">
       <img class="recipe-image" alt="">
-      <div class="recipe-content">
-        <h3 class="recipe-title"></h3>
+      <div class="card-body">
+        <div class="card-day"></div>
+        <button class="recipe-open-link" type="button"></button>
         <p class="recipe-meta"></p>
         <div class="recipe-state-row">
+          <label class="pick-wrap">
+            <input class="recipe-checkbox" type="checkbox">
+            <span>Pick</span>
+          </label>
           <button class="complete-btn" type="button">Mark Complete</button>
           <div class="stars" role="group" aria-label="Rate recipe">
             <button class="star-btn" type="button" data-rating="1">★</button>
@@ -62,8 +64,59 @@
           </div>
         </div>
       </div>
-    </label>
+    </article>
   </template>
+
+  <div id="recipeModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="recipeModalTitle">
+    <div class="modal-card">
+      <button id="closeRecipeModal" class="modal-close" type="button" aria-label="Close recipe details">×</button>
+      <img id="modalImage" class="modal-image" alt="">
+      <div class="modal-content">
+        <div class="modal-head-row">
+          <h2 id="recipeModalTitle"></h2>
+          <button id="editRecipeBtn" class="btn-secondary" type="button">Edit Recipe</button>
+        </div>
+        <p id="modalMeta" class="muted"></p>
+
+        <div id="recipeReadView">
+          <h3>Ingredients</h3>
+          <ul id="modalIngredients" class="modal-list"></ul>
+          <h3>Instructions</h3>
+          <ol id="modalInstructions" class="modal-list"></ol>
+        </div>
+
+        <form id="recipeEditForm" class="edit-form hidden">
+          <label>Title
+            <input id="editTitle" type="text">
+          </label>
+          <label>Image URL
+            <input id="editImage" type="text" placeholder="https://...">
+          </label>
+          <div class="edit-row">
+            <label>Servings
+              <input id="editServings" type="text" placeholder="4">
+            </label>
+            <label>Prep Time
+              <input id="editPrepTime" type="text" placeholder="10 min">
+            </label>
+            <label>Cook Time
+              <input id="editCookTime" type="text" placeholder="25 min">
+            </label>
+          </div>
+          <label>Ingredients (one per line)
+            <textarea id="editIngredients" rows="8"></textarea>
+          </label>
+          <label>Instructions (one per line)
+            <textarea id="editInstructions" rows="8"></textarea>
+          </label>
+          <div class="edit-actions">
+            <button id="cancelEditRecipeBtn" class="btn-secondary" type="button">Cancel</button>
+            <button id="saveEditRecipeBtn" class="btn-primary" type="submit">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
   <script src="/static/app.js"></script>
 </body>

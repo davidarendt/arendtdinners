@@ -72,6 +72,36 @@ async function fetchRecipeStates(recipeIds) {
   return states;
 }
 
+async function fetchRecipeOverrides(recipeIds) {
+  if (!recipeIds.length) return {};
+  const quoted = recipeIds
+    .map((id) => id.replace(/[^a-zA-Z0-9_.-]/g, ""))
+    .filter(Boolean)
+    .map((id) => `"${id}"`)
+    .join(",");
+  if (!quoted) return {};
+  const rows = await supabaseRequest(
+    "GET",
+    `/rest/v1/recipe_overrides?select=recipe_id,title,image,servings,prep_time,cook_time,ingredients,instructions,updated_at&recipe_id=in.(${encodeURIComponent(
+      quoted
+    )})`
+  );
+  const overrides = {};
+  for (const row of rows || []) {
+    overrides[row.recipe_id] = {
+      title: row.title || null,
+      image: row.image || null,
+      servings: row.servings || null,
+      prepTime: row.prep_time || null,
+      cookTime: row.cook_time || null,
+      ingredients: Array.isArray(row.ingredients) ? row.ingredients : null,
+      instructions: Array.isArray(row.instructions) ? row.instructions : null,
+      updatedAt: row.updated_at || null,
+    };
+  }
+  return overrides;
+}
+
 async function upsertRecipeState(recipeId, rating, completed) {
   const payload = { recipe_id: recipeId, updated_at: new Date().toISOString() };
   if (rating !== undefined) payload.rating = rating;
@@ -89,8 +119,34 @@ async function upsertRecipeState(recipeId, rating, completed) {
   };
 }
 
+async function upsertRecipeOverride(recipeId, patch) {
+  const payload = { recipe_id: recipeId, updated_at: new Date().toISOString() };
+  if (patch.title !== undefined) payload.title = patch.title;
+  if (patch.image !== undefined) payload.image = patch.image;
+  if (patch.servings !== undefined) payload.servings = patch.servings;
+  if (patch.prepTime !== undefined) payload.prep_time = patch.prepTime;
+  if (patch.cookTime !== undefined) payload.cook_time = patch.cookTime;
+  if (patch.ingredients !== undefined) payload.ingredients = patch.ingredients;
+  if (patch.instructions !== undefined) payload.instructions = patch.instructions;
+
+  const rows = await supabaseRequest("POST", "/rest/v1/recipe_overrides?on_conflict=recipe_id", payload);
+  const row = (rows || [])[0] || payload;
+  return {
+    title: row.title || null,
+    image: row.image || null,
+    servings: row.servings || null,
+    prepTime: row.prep_time || null,
+    cookTime: row.cook_time || null,
+    ingredients: Array.isArray(row.ingredients) ? row.ingredients : null,
+    instructions: Array.isArray(row.instructions) ? row.instructions : null,
+    updatedAt: row.updated_at || payload.updated_at,
+  };
+}
+
 module.exports = {
+  fetchRecipeOverrides,
   fetchRecipeStates,
   jsonResponse,
+  upsertRecipeOverride,
   upsertRecipeState,
 };

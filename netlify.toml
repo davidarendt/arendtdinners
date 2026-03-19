@@ -21,6 +21,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/recipe-edit"
+  to = "/.netlify/functions/recipe-edit"
+  status = 200
+
+[[redirects]]
   from = "/api/shopping-list"
   to = "/.netlify/functions/shopping-list"
   status = 200

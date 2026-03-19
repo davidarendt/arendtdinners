@@ -121,6 +121,26 @@ function extractIngredients(lines) {
   return ingredients;
 }
 
+function extractInstructions(lines) {
+  const instructions = [];
+  let inInstructions = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.toLowerCase().startsWith("## instructions")) {
+      inInstructions = true;
+      continue;
+    }
+    if (inInstructions && trimmed.startsWith("## ")) {
+      break;
+    }
+    if (!inInstructions) continue;
+    if (/^\d+\.\s+/.test(trimmed)) {
+      instructions.push(trimmed.replace(/^\d+\.\s+/, "").trim());
+    }
+  }
+  return instructions;
+}
+
 function sanitizeImageValue(image) {
   if (!image) return null;
   const value = image.trim();
@@ -154,12 +174,18 @@ function loadMarkdownRecipes() {
     }
     const id = name.replace(/\.md$/i, "");
     const ingredients = extractIngredients(lines);
+    const instructions = extractInstructions(lines);
+    const prepTime = fm.prep_time || null;
+    const cookTime = fm.cook_time || null;
     return {
       id,
       title,
       servings: fm.servings || null,
       image: sanitizeImageValue(fm.image || null),
+      prepTime,
+      cookTime,
       ingredients,
+      instructions,
     };
   });
 }
@@ -185,6 +211,35 @@ function extractFallbackImage(html) {
   return sanitizeImageValue(match[1]);
 }
 
+function parseIsoDuration(value) {
+  if (!value || typeof value !== "string") return null;
+  const match = value.match(/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/i);
+  if (!match) return null;
+  const hours = Number(match[1] || 0);
+  const mins = Number(match[2] || 0);
+  const parts = [];
+  if (hours) parts.push(`${hours} hr`);
+  if (mins) parts.push(`${mins} min`);
+  if (!parts.length) return null;
+  return parts.join(" ");
+}
+
+function extractInstructionsFromJsonLd(jsonLd) {
+  const source = jsonLd.recipeInstructions;
+  if (!Array.isArray(source)) return [];
+  const instructions = [];
+  for (const item of source) {
+    if (typeof item === "string") {
+      if (item.trim()) instructions.push(item.trim());
+      continue;
+    }
+    if (item && typeof item.text === "string" && item.text.trim()) {
+      instructions.push(item.text.trim());
+    }
+  }
+  return instructions;
+}
+
 function loadRawHtmlRecipes() {
   const dir = rawHtmlDir();
   if (!fs.existsSync(dir)) return [];
@@ -203,7 +258,10 @@ function loadRawHtmlRecipes() {
     const ingredients = Array.isArray(jsonLd.recipeIngredient)
       ? jsonLd.recipeIngredient.filter((item) => typeof item === "string" && item.trim())
       : [];
+    const instructions = extractInstructionsFromJsonLd(jsonLd);
     const servings = typeof jsonLd.recipeYield === "string" ? jsonLd.recipeYield.trim() : null;
+    const prepTime = parseIsoDuration(jsonLd.prepTime);
+    const cookTime = parseIsoDuration(jsonLd.cookTime);
     const imageFromLd =
       typeof jsonLd.image === "string"
         ? jsonLd.image
@@ -216,7 +274,10 @@ function loadRawHtmlRecipes() {
       title,
       servings,
       image,
+      prepTime,
+      cookTime,
       ingredients,
+      instructions,
     });
   }
   return results;
@@ -240,6 +301,37 @@ function loadRecipes() {
 
 function normalizeName(text) {
   return text.toLowerCase().replace("to taste", "").replace(/\s+/g, " ").replace(/^[,\s]+|[,\s]+$/g, "");
+}
+
+function canonicalParenthetical(text) {
+  const cleaned = text
+    .toLowerCase()
+    .replace(/\beach\b/g, "")
+    .replace(/\bper\b/g, "")
+    .replace(/\s+/g, " ")
+    .replace(/(\d)\s*(oz|lb|g|kg)\b/g, "$1 $2")
+    .replace(/[^\w\s./-]/g, "")
+    .trim();
+  return cleaned;
+}
+
+function splitNameAndQualifier(name) {
+  const trimmed = name.trim();
+  const leadingParen = trimmed.match(/^\(([^)]+)\)\s*(.+)$/);
+  if (leadingParen) {
+    return {
+      qualifier: canonicalParenthetical(leadingParen[1]),
+      baseName: leadingParen[2].trim(),
+    };
+  }
+  const inlineParen = trimmed.match(/^(.+?)\s*\(([^)]+)\)\s*$/);
+  if (inlineParen) {
+    return {
+      qualifier: canonicalParenthetical(inlineParen[2]),
+      baseName: inlineParen[1].trim(),
+    };
+  }
+  return { qualifier: "", baseName: trimmed };
 }
 
 function parseNumber(text) {
@@ -300,14 +392,17 @@ function buildShoppingList(selectedRecipes) {
   for (const recipe of selectedRecipes) {
     for (const line of recipe.ingredients) {
       const parsed = parseIngredient(line);
-      const normName = normalizeName(parsed.name);
+      const parts = splitNameAndQualifier(parsed.name);
+      const normName = normalizeName(parts.baseName);
+      const qualifier = parts.qualifier;
       if (parsed.quantity !== null) {
-        const key = `${normName}||${parsed.unit || ""}`;
+        const key = `${normName}||${parsed.unit || ""}||${qualifier}`;
         aggregated[key] = (aggregated[key] || 0) + parsed.quantity;
-        displayNames[key] = parsed.name;
+        const printableQualifier = qualifier ? ` (${qualifier})` : "";
+        displayNames[key] = `${parts.baseName}${printableQualifier}`;
       } else {
         if (!asNeeded[normName]) {
-          asNeeded[normName] = parsed.name;
+          asNeeded[normName] = parts.baseName;
         }
       }
     }
