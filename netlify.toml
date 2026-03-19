@@ -29,3 +29,8 @@
   from = "/api/shopping-list"
   to = "/.netlify/functions/shopping-list"
   status = 200
+
+[[redirects]]
+  from = "/recipes/*"
+  to = "/index.html"
+  status = 200

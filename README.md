@@ -85,7 +85,9 @@ Deployment config is in `netlify.toml`:
 
 - static publish dir: `web`
 - functions dir: `netlify/functions`
-- recipes included in function bundle: `recipes/claude/**/*.md`
+- recipes included in function bundle:
+  - `recipes/claude/**/*.md`
+  - `recipes/raw-html/**/*.html`
 
 ### Netlify environment variables
 
@@ -106,3 +108,29 @@ Then trigger a redeploy.
 ### Supabase schema updates
 
 If you already applied `supabase/schema.sql` before, run it again so the `recipe_overrides` table/policies are created.
+
+## One-time automation setup
+
+This repo includes:
+
+- `scripts/setup-once.ps1` (interactive one-time auth/link/env setup)
+- `scripts/sync.ps1` (daily command: db push + git push + prod deploy)
+- `supabase/migrations/20260319151500_baseline_recipe_schema.sql` (baseline DB migration)
+
+### One-time command
+
+From repo root:
+
+- `.\scripts\setup-once.ps1`
+
+### Daily command
+
+From repo root:
+
+- `.\scripts\sync.ps1`
+
+Optional flags:
+
+- `.\scripts\sync.ps1 -SkipDbPush`
+- `.\scripts\sync.ps1 -SkipGitPush`
+- `.\scripts\sync.ps1 -SkipNetlifyDeploy`

@@ -166,15 +166,10 @@ h2 {
 }
 
 .recipe-open-link {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  margin: 0;
-  text-align: left;
+  text-decoration: none;
   font-family: "Playfair Display", serif;
   font-size: 18px;
   color: var(--navy);
-  cursor: pointer;
   line-height: 1.25;
 }
 
@@ -282,54 +277,58 @@ h2 {
   color: #5c4f3f;
 }
 
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+.recipe-page {
+  padding: 14px 12px 26px;
+}
+
+.recipe-page-wrap {
+  max-width: 880px;
+  margin: 0 auto;
   display: grid;
-  place-items: center;
-  z-index: 100;
-  padding: 10px;
+  gap: 10px;
 }
 
-.modal.hidden { display: none; }
-
-.modal-card {
-  position: relative;
-  width: min(760px, 96vw);
-  max-height: 96vh;
-  overflow: auto;
-  background: #fff;
-  border-radius: 10px;
+.back-link {
+  color: var(--navy);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
 }
 
-.modal-close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  border: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.4);
-  color: #fff;
-  font-size: 24px;
-  line-height: 1;
-  cursor: pointer;
+.back-link:hover { text-decoration: underline; }
+
+.recipe-url-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
 }
 
-.modal-image {
+.recipe-url-row a {
+  color: var(--terracotta);
+  text-decoration: none;
+  font-size: 13px;
+}
+
+.recipe-url-row a:hover { text-decoration: underline; }
+
+.recipe-page-image {
   width: 100%;
   max-height: 280px;
   object-fit: cover;
   background: #ddd;
+  border-radius: 10px;
 }
 
-.modal-content {
+.recipe-page-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
   padding: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
 }
 
-.modal-content h2 {
+.recipe-page-card h2 {
   font-size: 28px;
 }
 
@@ -340,7 +339,7 @@ h2 {
   gap: 10px;
 }
 
-.modal-content h3 {
+.recipe-page-card h3 {
   margin: 14px 0 6px;
   font-family: "Playfair Display", serif;
   color: var(--navy);

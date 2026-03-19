@@ -1,3 +1,5 @@
+const homeView = document.getElementById("homeView");
+const recipePage = document.getElementById("recipePage");
 const weeksWrap = document.getElementById("weeksWrap");
 const selectionCount = document.getElementById("selectionCount");
 const generateBtn = document.getElementById("generateBtn");
@@ -6,13 +8,13 @@ const shoppingOutput = document.getElementById("shoppingOutput");
 const savedFile = document.getElementById("savedFile");
 const recipeCardTemplate = document.getElementById("recipeCardTemplate");
 const stateHint = document.getElementById("stateHint");
-const recipeModal = document.getElementById("recipeModal");
-const closeRecipeModal = document.getElementById("closeRecipeModal");
-const modalImage = document.getElementById("modalImage");
-const recipeModalTitle = document.getElementById("recipeModalTitle");
-const modalMeta = document.getElementById("modalMeta");
-const modalIngredients = document.getElementById("modalIngredients");
-const modalInstructions = document.getElementById("modalInstructions");
+const backToPlanner = document.getElementById("backToPlanner");
+const recipePageUrl = document.getElementById("recipePageUrl");
+const recipePageImage = document.getElementById("recipePageImage");
+const recipePageTitle = document.getElementById("recipePageTitle");
+const recipePageMeta = document.getElementById("recipePageMeta");
+const recipePageIngredients = document.getElementById("recipePageIngredients");
+const recipePageInstructions = document.getElementById("recipePageInstructions");
 const editRecipeBtn = document.getElementById("editRecipeBtn");
 const recipeReadView = document.getElementById("recipeReadView");
 const recipeEditForm = document.getElementById("recipeEditForm");
@@ -27,13 +29,14 @@ const cancelEditRecipeBtn = document.getElementById("cancelEditRecipeBtn");
 const saveEditRecipeBtn = document.getElementById("saveEditRecipeBtn");
 
 let recipes = [];
-const selectedIds = new Set();
-let recipeStates = {};
-let statePersistenceEnabled = false;
-let latestShoppingMarkdown = "";
-const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+let recipeById = new Map();
 let activeRecipeId = null;
 let editMode = false;
+let recipeStates = {};
+let statePersistenceEnabled = false;
+const selectedIds = new Set();
+let latestShoppingMarkdown = "";
+const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function escapeHtml(value) {
   return value
@@ -45,9 +48,8 @@ function escapeHtml(value) {
 }
 
 function updateSelectionUi() {
-  const count = selectedIds.size;
-  selectionCount.textContent = `${count} selected`;
-  generateBtn.disabled = count === 0;
+  selectionCount.textContent = `${selectedIds.size} selected`;
+  generateBtn.disabled = selectedIds.size === 0;
   downloadBtn.disabled = !latestShoppingMarkdown;
 }
 
@@ -76,6 +78,28 @@ function setCompleteButton(completeBtn, completed) {
   }
 }
 
+function setEditMode(enabled) {
+  editMode = enabled;
+  recipeReadView.classList.toggle("hidden", enabled);
+  recipeEditForm.classList.toggle("hidden", !enabled);
+  editRecipeBtn.disabled = enabled;
+  editRecipeBtn.textContent = enabled ? "Editing..." : "Edit Recipe";
+}
+
+function recipePath(recipeId) {
+  return `/recipes/${encodeURIComponent(recipeId)}`;
+}
+
+function getRouteRecipeId() {
+  const match = window.location.pathname.match(/^\/recipes\/([^/]+)\/?$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function navigateTo(url) {
+  window.history.pushState({}, "", url);
+  renderRoute();
+}
+
 async function saveRecipeState(recipeId, patch) {
   const response = await fetch("/api/recipe-state", {
     method: "POST",
@@ -83,9 +107,7 @@ async function saveRecipeState(recipeId, patch) {
     body: JSON.stringify({ recipeId, ...patch }),
   });
   const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload.error || "Failed to save recipe state.");
-  }
+  if (!response.ok) throw new Error(payload.error || "Failed to save recipe state.");
   return payload.state;
 }
 
@@ -96,112 +118,48 @@ async function saveRecipeEdits(recipeId, patch) {
     body: JSON.stringify({ recipeId, ...patch }),
   });
   const payload = await response.json();
-  if (!response.ok) {
-    throw new Error(payload.error || "Failed to save recipe changes.");
-  }
+  if (!response.ok) throw new Error(payload.error || "Failed to save recipe changes.");
   return payload.override;
 }
 
-function setEditMode(enabled) {
-  editMode = enabled;
-  recipeReadView.classList.toggle("hidden", enabled);
-  recipeEditForm.classList.toggle("hidden", !enabled);
-  editRecipeBtn.textContent = enabled ? "Editing..." : "Edit Recipe";
-  editRecipeBtn.disabled = enabled;
-}
-
-function openRecipeModal(recipe) {
-  activeRecipeId = recipe.id;
-  recipeModalTitle.textContent = recipe.title;
-  const metaParts = [];
-  if (recipe.servings) metaParts.push(`${recipe.servings} servings`);
-  if (recipe.prepTime) metaParts.push(`Prep: ${recipe.prepTime}`);
-  if (recipe.cookTime) metaParts.push(`Cook: ${recipe.cookTime}`);
-  modalMeta.textContent = metaParts.join(" · ");
-
-  if (recipe.image) {
-    modalImage.src = recipe.image;
-    modalImage.alt = recipe.title;
-    modalImage.style.display = "block";
-  } else {
-    modalImage.removeAttribute("src");
-    modalImage.style.display = "none";
-  }
-
-  modalIngredients.innerHTML = "";
-  for (const ingredient of recipe.ingredients || []) {
-    const li = document.createElement("li");
-    li.textContent = ingredient;
-    modalIngredients.appendChild(li);
-  }
-
-  modalInstructions.innerHTML = "";
-  const steps = recipe.instructions || [];
-  if (steps.length) {
-    for (const step of steps) {
-      const li = document.createElement("li");
-      li.textContent = step;
-      modalInstructions.appendChild(li);
-    }
-  } else {
-    const li = document.createElement("li");
-    li.textContent = "Instructions were not found in this recipe file yet.";
-    modalInstructions.appendChild(li);
-  }
-
-  recipeModal.classList.remove("hidden");
-  setEditMode(false);
-}
-
-function renderRecipes() {
+function renderHome() {
   weeksWrap.innerHTML = "";
-  if (recipes.length === 0) {
+  if (!recipes.length) {
     weeksWrap.innerHTML = '<p class="muted">No dinners found yet in recipe files.</p>';
     return;
   }
-
   const weeks = chunkRecipes(recipes, 7);
   for (let weekIndex = 0; weekIndex < weeks.length; weekIndex += 1) {
-    const weekRecipes = weeks[weekIndex];
     const weekSection = document.createElement("section");
     weekSection.className = "week-section";
-
-    const weekTitle = document.createElement("div");
-    weekTitle.className = "week-title";
-    weekTitle.textContent = `Week ${weekIndex + 1}`;
-    weekSection.appendChild(weekTitle);
-
-    const weekTheme = document.createElement("div");
-    weekTheme.className = "week-theme";
-    weekTheme.textContent = "Weekly dinner plan";
-    weekSection.appendChild(weekTheme);
-
+    weekSection.innerHTML = `<div class="week-title">Week ${weekIndex + 1}</div><div class="week-theme">Weekly dinner plan</div>`;
     const weekGrid = document.createElement("div");
     weekGrid.className = "week-grid";
-
+    const weekRecipes = weeks[weekIndex];
     for (let i = 0; i < weekRecipes.length; i += 1) {
       const recipe = weekRecipes[i];
       const node = recipeCardTemplate.content.cloneNode(true);
       const checkbox = node.querySelector(".recipe-checkbox");
       const day = node.querySelector(".card-day");
       const image = node.querySelector(".recipe-image");
-      const nameBtn = node.querySelector(".recipe-open-link");
+      const link = node.querySelector(".recipe-open-link");
       const meta = node.querySelector(".recipe-meta");
       const completeBtn = node.querySelector(".complete-btn");
       const starButtons = node.querySelectorAll(".star-btn");
 
       day.textContent = dayNames[i] || `Day ${i + 1}`;
-      nameBtn.textContent = recipe.title;
-      nameBtn.addEventListener("click", () => openRecipeModal(recipe));
+      link.textContent = recipe.title;
+      link.href = recipePath(recipe.id);
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        navigateTo(recipePath(recipe.id));
+      });
 
       checkbox.value = recipe.id;
       checkbox.checked = selectedIds.has(recipe.id);
       checkbox.addEventListener("change", () => {
-        if (checkbox.checked) {
-          selectedIds.add(recipe.id);
-        } else {
-          selectedIds.delete(recipe.id);
-        }
+        if (checkbox.checked) selectedIds.add(recipe.id);
+        else selectedIds.delete(recipe.id);
         updateSelectionUi();
       });
 
@@ -228,7 +186,6 @@ function renderRecipes() {
       } else {
         completeBtn.addEventListener("click", async (event) => {
           event.preventDefault();
-          event.stopPropagation();
           const current = recipeStates[recipe.id] || { completed: false };
           const nextCompleted = !Boolean(current.completed);
           setCompleteButton(completeBtn, nextCompleted);
@@ -241,11 +198,9 @@ function renderRecipes() {
             stateHint.textContent = error.message;
           }
         });
-
         for (const btn of starButtons) {
           btn.addEventListener("click", async (event) => {
             event.preventDefault();
-            event.stopPropagation();
             const rating = Number(btn.dataset.rating);
             const current = recipeStates[recipe.id] || { rating: null };
             setStars(starButtons, rating);
@@ -267,39 +222,84 @@ function renderRecipes() {
   }
 }
 
-function sectionHtml(title, items) {
-  if (!items || items.length === 0) {
-    return "";
+function renderRecipePage(recipe) {
+  activeRecipeId = recipe ? recipe.id : null;
+  if (!recipe) {
+    recipePageTitle.textContent = "Recipe not found";
+    recipePageMeta.textContent = "This recipe URL does not match any loaded recipe.";
+    recipePageImage.style.display = "none";
+    recipePageIngredients.innerHTML = "";
+    recipePageInstructions.innerHTML = "";
+    return;
+  }
+  recipePageTitle.textContent = recipe.title;
+  const metaParts = [];
+  if (recipe.servings) metaParts.push(`${recipe.servings} servings`);
+  if (recipe.prepTime) metaParts.push(`Prep: ${recipe.prepTime}`);
+  if (recipe.cookTime) metaParts.push(`Cook: ${recipe.cookTime}`);
+  recipePageMeta.textContent = metaParts.join(" · ");
+  const fullUrl = `${window.location.origin}${recipePath(recipe.id)}`;
+  recipePageUrl.href = fullUrl;
+  recipePageUrl.textContent = fullUrl;
+  if (recipe.image) {
+    recipePageImage.src = recipe.image;
+    recipePageImage.alt = recipe.title;
+    recipePageImage.style.display = "block";
+  } else {
+    recipePageImage.style.display = "none";
   }
 
-  const rows = items
-    .map((item) => `<li><input type="checkbox" /> <span>${escapeHtml(item)}</span></li>`)
-    .join("");
+  recipePageIngredients.innerHTML = "";
+  for (const ingredient of recipe.ingredients || []) {
+    const li = document.createElement("li");
+    li.textContent = ingredient;
+    recipePageIngredients.appendChild(li);
+  }
 
-  return `
-    <section class="category">
-      <h3>${escapeHtml(title)}</h3>
-      <ul class="items">${rows}</ul>
-    </section>
-  `;
+  recipePageInstructions.innerHTML = "";
+  const steps = recipe.instructions || [];
+  if (!steps.length) {
+    const li = document.createElement("li");
+    li.textContent = "Instructions were not found in this recipe yet.";
+    recipePageInstructions.appendChild(li);
+  } else {
+    for (const step of steps) {
+      const li = document.createElement("li");
+      li.textContent = step;
+      recipePageInstructions.appendChild(li);
+    }
+  }
+  setEditMode(false);
+}
+
+function renderRoute() {
+  const routeId = getRouteRecipeId();
+  if (routeId) {
+    const recipe = recipeById.get(routeId) || null;
+    homeView.classList.add("hidden");
+    recipePage.classList.remove("hidden");
+    renderRecipePage(recipe);
+  } else {
+    recipePage.classList.add("hidden");
+    homeView.classList.remove("hidden");
+    renderHome();
+    updateSelectionUi();
+  }
+}
+
+function sectionHtml(title, items) {
+  if (!items || !items.length) return "";
+  const rows = items.map((item) => `<li><input type="checkbox" /> <span>${escapeHtml(item)}</span></li>`).join("");
+  return `<section class="category"><h3>${escapeHtml(title)}</h3><ul class="items">${rows}</ul></section>`;
 }
 
 function renderShoppingList(payload) {
   const categories = ["Produce", "Meat and Seafood", "Dairy and Eggs", "Pantry and Spices", "Other"];
   const sections = [];
-
-  for (const category of categories) {
-    sections.push(sectionHtml(category, payload.consolidated[category]));
-  }
-  for (const category of categories) {
-    sections.push(sectionHtml(`${category} (As Needed)`, payload.asNeeded[category]));
-  }
-
+  for (const category of categories) sections.push(sectionHtml(category, payload.consolidated[category]));
+  for (const category of categories) sections.push(sectionHtml(`${category} (As Needed)`, payload.asNeeded[category]));
   const selected = payload.selected.map((title) => `<span class="chip">${escapeHtml(title)}</span>`).join(" ");
-  shoppingOutput.innerHTML = `
-    <div>${selected || ""}</div>
-    ${sections.filter(Boolean).join("") || '<p class="muted">No ingredients found.</p>'}
-  `;
+  shoppingOutput.innerHTML = `<div>${selected || ""}</div>${sections.filter(Boolean).join("") || '<p class="muted">No ingredients found.</p>'}`;
   latestShoppingMarkdown = payload.markdown || "";
   savedFile.textContent = payload.savedFile ? `Saved to ${payload.savedFile}` : "List ready to download.";
   updateSelectionUi();
@@ -307,11 +307,10 @@ function renderShoppingList(payload) {
 
 async function loadRecipes() {
   const response = await fetch("/api/recipes");
-  if (!response.ok) {
-    throw new Error("Failed to load recipes.");
-  }
+  if (!response.ok) throw new Error("Failed to load recipes.");
   const payload = await response.json();
   recipes = payload.recipes || [];
+  recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
 }
 
 async function loadRecipeStates() {
@@ -326,7 +325,7 @@ async function loadRecipeStates() {
     recipeStates = payload.states || {};
     statePersistenceEnabled = true;
     stateHint.textContent = "Ratings and completion are synced to Supabase.";
-  } catch (_error) {
+  } catch (_err) {
     statePersistenceEnabled = false;
     stateHint.textContent = "Supabase state is unavailable.";
   }
@@ -342,9 +341,7 @@ async function generateShoppingList() {
       body: JSON.stringify({ recipeIds: [...selectedIds] }),
     });
     const payload = await response.json();
-    if (!response.ok) {
-      throw new Error(payload.error || "Failed to generate shopping list.");
-    }
+    if (!response.ok) throw new Error(payload.error || "Failed to generate shopping list.");
     renderShoppingList(payload);
   } catch (error) {
     shoppingOutput.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`;
@@ -371,32 +368,15 @@ function downloadShoppingList() {
 generateBtn.addEventListener("click", generateShoppingList);
 downloadBtn.addEventListener("click", downloadShoppingList);
 
-Promise.all([loadRecipes(), loadRecipeStates()])
-  .then(() => {
-    renderRecipes();
-    updateSelectionUi();
-  })
-  .catch((error) => {
-    weeksWrap.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`;
-  });
-
-closeRecipeModal.addEventListener("click", () => {
-  recipeModal.classList.add("hidden");
-  activeRecipeId = null;
-  setEditMode(false);
+backToPlanner.addEventListener("click", (event) => {
+  event.preventDefault();
+  navigateTo("/");
 });
 
-recipeModal.addEventListener("click", (event) => {
-  if (event.target === recipeModal) {
-    recipeModal.classList.add("hidden");
-    activeRecipeId = null;
-    setEditMode(false);
-  }
-});
+window.addEventListener("popstate", renderRoute);
 
 editRecipeBtn.addEventListener("click", () => {
-  if (!activeRecipeId) return;
-  const recipe = recipes.find((item) => item.id === activeRecipeId);
+  const recipe = recipeById.get(activeRecipeId);
   if (!recipe) return;
   editTitle.value = recipe.title || "";
   editImage.value = recipe.image || "";
@@ -417,43 +397,33 @@ recipeEditForm.addEventListener("submit", async (event) => {
   if (!activeRecipeId) return;
   saveEditRecipeBtn.disabled = true;
   saveEditRecipeBtn.textContent = "Saving...";
-
   const patch = {
     title: editTitle.value.trim(),
     image: editImage.value.trim(),
     servings: editServings.value.trim(),
     prepTime: editPrepTime.value.trim(),
     cookTime: editCookTime.value.trim(),
-    ingredients: editIngredients.value
-      .split("\n")
-      .map((v) => v.trim())
-      .filter(Boolean),
-    instructions: editInstructions.value
-      .split("\n")
-      .map((v) => v.trim())
-      .filter(Boolean),
+    ingredients: editIngredients.value.split("\n").map((v) => v.trim()).filter(Boolean),
+    instructions: editInstructions.value.split("\n").map((v) => v.trim()).filter(Boolean),
   };
-
   try {
     await saveRecipeEdits(activeRecipeId, patch);
-    const recipe = recipes.find((item) => item.id === activeRecipeId);
-    if (recipe) {
-      recipe.title = patch.title || recipe.title;
-      recipe.image = patch.image || null;
-      recipe.servings = patch.servings || null;
-      recipe.prepTime = patch.prepTime || null;
-      recipe.cookTime = patch.cookTime || null;
-      recipe.ingredients = patch.ingredients;
-      recipe.instructions = patch.instructions;
-      recipe.ingredientCount = recipe.ingredients.length;
-      openRecipeModal(recipe);
-      renderRecipes();
-      updateSelectionUi();
-    }
+    await loadRecipes();
+    renderRoute();
   } catch (error) {
     stateHint.textContent = error.message;
   } finally {
     saveEditRecipeBtn.disabled = false;
     saveEditRecipeBtn.textContent = "Save Changes";
+    setEditMode(false);
   }
 });
+
+Promise.all([loadRecipes(), loadRecipeStates()])
+  .then(() => {
+    renderRoute();
+    updateSelectionUi();
+  })
+  .catch((error) => {
+    weeksWrap.innerHTML = `<p class="muted">${escapeHtml(error.message)}</p>`;
+  });
