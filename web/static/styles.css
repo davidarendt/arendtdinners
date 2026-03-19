@@ -71,6 +71,27 @@ h1 {
   box-shadow: 0 6px 18px rgba(48, 87, 213, 0.35);
 }
 
+.btn-secondary {
+  border: 1px solid #c9d3ef;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 600;
+  background: #fff;
+  color: #324372;
+  cursor: pointer;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .btn-primary:disabled {
   opacity: 0.45;
   cursor: not-allowed;

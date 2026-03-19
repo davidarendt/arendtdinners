@@ -1,0 +1,26 @@
+[build]
+  publish = "web"
+  functions = "netlify/functions"
+
+[functions]
+  included_files = ["recipes/claude/**/*.md"]
+
+[[redirects]]
+  from = "/api/recipes"
+  to = "/.netlify/functions/recipes"
+  status = 200
+
+[[redirects]]
+  from = "/api/recipe-states"
+  to = "/.netlify/functions/recipe-states"
+  status = 200
+
+[[redirects]]
+  from = "/api/recipe-state"
+  to = "/.netlify/functions/recipe-state"
+  status = 200
+
+[[redirects]]
+  from = "/api/shopping-list"
+  to = "/.netlify/functions/shopping-list"
+  status = 200

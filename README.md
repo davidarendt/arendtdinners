@@ -70,3 +70,33 @@ When configured, the dinner cards show interactive:
 
 - star rating (1-5)
 - Mark Complete / Completed toggle
+
+## Netlify deployment (serverless backend)
+
+This repo now includes Netlify Functions in `netlify/functions/` for:
+
+- `GET /api/recipes`
+- `POST /api/shopping-list`
+- `GET /api/recipe-states`
+- `POST /api/recipe-state`
+
+Deployment config is in `netlify.toml`:
+
+- static publish dir: `web`
+- functions dir: `netlify/functions`
+- recipes included in function bundle: `recipes/claude/**/*.md`
+
+### Netlify environment variables
+
+Add these in Netlify Site Settings -> Environment variables:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+
+Then trigger a redeploy.
+
+### Notes
+
+- Netlify Functions are stateless, so shopping lists are generated on demand.
+- The app now returns downloadable markdown for each generated list.
+- Local image paths like `file:///...` do not work on Netlify. Use `https://...` or site-relative image paths.

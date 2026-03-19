@@ -1,6 +1,7 @@
 const recipesGrid = document.getElementById("recipesGrid");
 const selectionCount = document.getElementById("selectionCount");
 const generateBtn = document.getElementById("generateBtn");
+const downloadBtn = document.getElementById("downloadBtn");
 const shoppingOutput = document.getElementById("shoppingOutput");
 const savedFile = document.getElementById("savedFile");
 const recipeCardTemplate = document.getElementById("recipeCardTemplate");
@@ -10,6 +11,7 @@ let recipes = [];
 const selectedIds = new Set();
 let recipeStates = {};
 let statePersistenceEnabled = false;
+let latestShoppingMarkdown = "";
 
 function escapeHtml(value) {
   return value
@@ -24,6 +26,7 @@ function updateSelectionUi() {
   const count = selectedIds.size;
   selectionCount.textContent = `${count} selected`;
   generateBtn.disabled = count === 0;
+  downloadBtn.disabled = !latestShoppingMarkdown;
 }
 
 function setStars(starButtons, rating) {
@@ -174,7 +177,9 @@ function renderShoppingList(payload) {
     <div>${selected || ""}</div>
     ${sections.filter(Boolean).join("") || '<p class="muted">No ingredients found.</p>'}
   `;
-  savedFile.textContent = `Saved to ${payload.savedFile}`;
+  latestShoppingMarkdown = payload.markdown || "";
+  savedFile.textContent = payload.savedFile ? `Saved to ${payload.savedFile}` : "List ready to download.";
+  updateSelectionUi();
 }
 
 async function loadRecipes() {
@@ -226,7 +231,22 @@ async function generateShoppingList() {
   }
 }
 
+function downloadShoppingList() {
+  if (!latestShoppingMarkdown) return;
+  const blob = new Blob([latestShoppingMarkdown], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const stamp = new Date().toISOString().slice(0, 10);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `shopping-list-${stamp}.md`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 generateBtn.addEventListener("click", generateShoppingList);
+downloadBtn.addEventListener("click", downloadShoppingList);
 
 Promise.all([loadRecipes(), loadRecipeStates()])
   .then(() => {
