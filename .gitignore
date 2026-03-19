@@ -1,0 +1,15 @@
+# Python cache/bytecode
+__pycache__/
+*.pyc
+
+# Environment variables / secrets
+.env
+
+# Local outputs
+shopping-list.md
+shopping-lists/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/

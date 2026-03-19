@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meal Planner</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-wrap">
+      <div class="brand-dot"></div>
+      <div>
+        <h1>Meal Planner</h1>
+        <p>Pick dinners and generate one order list.</p>
+      </div>
+    </div>
+    <button id="generateBtn" class="btn-primary" disabled>Generate Shopping List</button>
+  </header>
+
+  <main class="page">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Dinners</h2>
+        <p id="selectionCount">0 selected</p>
+      </div>
+      <p id="stateHint" class="muted"></p>
+      <div id="recipesGrid" class="recipes-grid">
+        <p class="muted">Loading recipes...</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Shopping List</h2>
+        <p id="savedFile" class="muted">No list generated yet.</p>
+      </div>
+      <div id="shoppingOutput" class="shopping-output">
+        <p class="muted">Select dinners, then tap Generate Shopping List.</p>
+      </div>
+    </section>
+  </main>
+
+  <template id="recipeCardTemplate">
+    <label class="recipe-card">
+      <input class="recipe-checkbox" type="checkbox">
+      <img class="recipe-image" alt="">
+      <div class="recipe-content">
+        <h3 class="recipe-title"></h3>
+        <p class="recipe-meta"></p>
+        <div class="recipe-state-row">
+          <button class="complete-btn" type="button">Mark Complete</button>
+          <div class="stars" role="group" aria-label="Rate recipe">
+            <button class="star-btn" type="button" data-rating="1">★</button>
+            <button class="star-btn" type="button" data-rating="2">★</button>
+            <button class="star-btn" type="button" data-rating="3">★</button>
+            <button class="star-btn" type="button" data-rating="4">★</button>
+            <button class="star-btn" type="button" data-rating="5">★</button>
+          </div>
+        </div>
+      </div>
+    </label>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

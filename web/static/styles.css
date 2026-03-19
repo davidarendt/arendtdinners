@@ -1,0 +1,282 @@
+:root {
+  --bg: #f3f5f9;
+  --surface: #ffffff;
+  --surface-soft: #f9fafc;
+  --border: #dce2ee;
+  --text: #142033;
+  --text-soft: #5a667d;
+  --primary: #3057d5;
+  --primary-dark: #2545ad;
+  --shadow: 0 8px 30px rgba(14, 30, 64, 0.08);
+  --radius: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Inter, Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, #eef2ff 0%, var(--bg) 240px);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+}
+
+h1 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.topbar p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-soft);
+}
+
+.btn-primary {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 600;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(48, 87, 213, 0.35);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+
+.page {
+  max-width: 1100px;
+  margin: 16px auto;
+  padding: 0 12px 28px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.muted {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+}
+
+.recipes-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.recipe-card {
+  display: grid;
+  grid-template-columns: auto 72px 1fr;
+  align-items: start;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--surface-soft);
+  cursor: pointer;
+}
+
+.recipe-card:hover {
+  border-color: #b7c4ea;
+}
+
+.recipe-checkbox {
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+}
+
+.recipe-image {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #d9e0ef;
+  background: #eef3ff;
+}
+
+.recipe-title {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.recipe-meta {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+}
+
+.recipe-state-row {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.complete-btn {
+  border: 1px solid #c8d2ea;
+  border-radius: 999px;
+  background: white;
+  color: #344567;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.complete-btn.done {
+  background: #e9f8ef;
+  border-color: #9ad6b0;
+  color: #0f6e39;
+}
+
+.complete-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.star-btn {
+  border: 0;
+  background: transparent;
+  font-size: 1rem;
+  line-height: 1;
+  color: #c0c8db;
+  cursor: pointer;
+  padding: 2px 1px;
+}
+
+.star-btn.active {
+  color: #f4b63f;
+}
+
+.star-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.shopping-output {
+  display: grid;
+  gap: 12px;
+}
+
+.category {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.category h3 {
+  margin: 0;
+  background: #f7f9ff;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+  padding: 10px 12px;
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 8px 12px 10px;
+}
+
+.items li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: 0.9rem;
+}
+
+.chip {
+  display: inline-block;
+  font-size: 0.74rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #edf2ff;
+  color: #324372;
+}
+
+@media (min-width: 860px) {
+  .page {
+    grid-template-columns: 1.05fr 1fr;
+    gap: 18px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  h1 {
+    font-size: 1.1rem;
+  }
+
+  h2 {
+    font-size: 1.05rem;
+  }
+}
