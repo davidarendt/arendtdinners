@@ -104,6 +104,7 @@ Then trigger a redeploy.
 - The app now returns downloadable markdown for each generated list.
 - Local image paths like `file:///...` do not work on Netlify. Use `https://...` or site-relative image paths.
 - Recipe edits (title/image/times/ingredients/instructions) are stored in Supabase overrides.
+- For imports into apps like Mealime, use `/mealime/<recipe-id>` URLs. These are server-rendered HTML with visible ingredients/instructions and JSON-LD recipe schema.
 
 ### Supabase schema updates
 

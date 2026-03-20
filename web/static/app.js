@@ -10,6 +10,7 @@ const recipeCardTemplate = document.getElementById("recipeCardTemplate");
 const stateHint = document.getElementById("stateHint");
 const backToPlanner = document.getElementById("backToPlanner");
 const recipePageUrl = document.getElementById("recipePageUrl");
+const mealimeImportUrl = document.getElementById("mealimeImportUrl");
 const recipePageImage = document.getElementById("recipePageImage");
 const recipePageTitle = document.getElementById("recipePageTitle");
 const recipePageMeta = document.getElementById("recipePageMeta");
@@ -88,6 +89,10 @@ function setEditMode(enabled) {
 
 function recipePath(recipeId) {
   return `/recipes/${encodeURIComponent(recipeId)}`;
+}
+
+function mealimePath(recipeId) {
+  return `/mealime/${encodeURIComponent(recipeId)}`;
 }
 
 function getRouteRecipeId() {
@@ -241,6 +246,9 @@ function renderRecipePage(recipe) {
   const fullUrl = `${window.location.origin}${recipePath(recipe.id)}`;
   recipePageUrl.href = fullUrl;
   recipePageUrl.textContent = fullUrl;
+  const mealimeUrl = `${window.location.origin}${mealimePath(recipe.id)}`;
+  mealimeImportUrl.href = mealimeUrl;
+  mealimeImportUrl.textContent = mealimeUrl;
   if (recipe.image) {
     recipePageImage.src = recipe.image;
     recipePageImage.alt = recipe.title;
