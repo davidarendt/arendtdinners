@@ -40,12 +40,16 @@ function buildJsonLd(recipe) {
 }
 
 function renderRecipePage(recipe, url) {
-  const ingredients = (recipe.ingredients || [])
-    .map((item) => `<li>${htmlEscape(item)}</li>`)
+  const ingredientItems = recipe.ingredients || [];
+  const instructionItems = recipe.instructions || [];
+  const ingredients = ingredientItems
+    .map((item) => `<li itemprop="recipeIngredient">${htmlEscape(item)}</li>`)
     .join("");
-  const instructions = (recipe.instructions || [])
-    .map((item) => `<li>${htmlEscape(item)}</li>`)
+  const instructions = instructionItems
+    .map((item, index) => `<li itemprop="recipeInstructions"><span class="step-num">${index + 1}.</span> ${htmlEscape(item)}</li>`)
     .join("");
+  const ingredientsPlain = ingredientItems.map((item) => `- ${item}`).join("\n");
+  const instructionsPlain = instructionItems.map((item, index) => `${index + 1}. ${item}`).join("\n");
   const metaParts = [];
   if (recipe.servings) metaParts.push(`${htmlEscape(recipe.servings)} servings`);
   if (recipe.prepTime) metaParts.push(`Prep: ${htmlEscape(recipe.prepTime)}`);
@@ -54,7 +58,7 @@ function renderRecipePage(recipe, url) {
   const imageTag = recipe.image
     ? `<img src="${htmlEscape(recipe.image)}" alt="${htmlEscape(recipe.title)}" style="width:100%;max-height:320px;object-fit:cover;border-radius:8px;background:#ddd;">`
     : "";
-  const jsonLd = htmlEscape(JSON.stringify(buildJsonLd(recipe)));
+  const jsonLd = JSON.stringify(buildJsonLd(recipe)).replace(/<\/script/gi, "<\\/script");
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -72,8 +76,12 @@ function renderRecipePage(recipe, url) {
     .meta { margin:0 0 14px; color:#6b5e4e; font-size:14px; }
     .card { background:#fff; border:1px solid rgba(28,43,58,.14); border-radius:10px; padding:14px; margin-top:12px; }
     h2 { color:#1c2b3a; margin:10px 0 8px; font-size:22px; }
-    ul, ol { margin:0; padding-left:22px; line-height:1.6; }
+    ul, ol { margin:0; padding-left:22px; line-height:1.7; }
     li { margin:4px 0; }
+    .step-num { font-weight:700; margin-right:4px; }
+    .import-plain { margin-top:12px; background:#fbf8f2; border:1px solid rgba(28,43,58,.14); border-radius:8px; padding:10px; }
+    .import-plain h3 { margin:0 0 6px; color:#1c2b3a; font-size:16px; }
+    .import-plain pre { margin:0; white-space:pre-wrap; font-size:14px; line-height:1.55; font-family: Arial, sans-serif; }
     .top-link { display:inline-block; margin-bottom:12px; color:#c4622d; text-decoration:none; font-weight:600; }
   </style>
 </head>
@@ -83,11 +91,19 @@ function renderRecipePage(recipe, url) {
     <h1>${htmlEscape(recipe.title)}</h1>
     <p class="meta">${meta}</p>
     ${imageTag}
-    <section class="card">
+    <section class="card" itemscope itemtype="https://schema.org/Recipe">
       <h2>Ingredients</h2>
       <ul>${ingredients || "<li>No ingredients listed.</li>"}</ul>
       <h2>Instructions</h2>
       <ol>${instructions || "<li>No instructions listed.</li>"}</ol>
+      <div class="import-plain">
+        <h3>Ingredients (Plain Text)</h3>
+        <pre>${htmlEscape(ingredientsPlain || "No ingredients listed.")}</pre>
+      </div>
+      <div class="import-plain">
+        <h3>Instructions (Plain Text)</h3>
+        <pre>${htmlEscape(instructionsPlain || "No instructions listed.")}</pre>
+      </div>
     </section>
   </main>
 </body>
