@@ -38,7 +38,21 @@ let recipeStates = {};
 let statePersistenceEnabled = false;
 const selectedIds = new Set();
 let latestShoppingMarkdown = "";
+let activeProteinFilter = "all";
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+// ---- Protein tagging ----
+function getProtein(id) {
+  if (/frittata|shakshuka|baked-egg|bacon-egg|eggs-en-cocotte|egg-scramble|egg-fried/.test(id)) return "eggs";
+  if (/duck/.test(id)) return "duck";
+  if (/tofu/.test(id)) return "tofu";
+  if (/lamb/.test(id)) return "lamb";
+  if (/kielbasa|andouille|pork|pulled-pork|chorizo/.test(id)) return "pork";
+  if (/turkey/.test(id)) return "turkey";
+  if (/chicken/.test(id)) return "chicken";
+  if (/beef|steak|bulgogi|smash-burger|chuck/.test(id)) return "beef";
+  return "other";
+}
 
 // ---- Image placeholder helpers ----
 const PLACEHOLDER_GRADIENTS = [
@@ -80,6 +94,36 @@ function updateSelectionUi() {
   generateBtn.disabled = selectedIds.size === 0;
   downloadBtn.disabled = !latestShoppingMarkdown;
 }
+
+function applyFilter() {
+  const sections = weeksWrap.querySelectorAll(".week-section");
+  for (const section of sections) {
+    const cards = section.querySelectorAll(".card");
+    let visible = 0;
+    for (const card of cards) {
+      const protein = card.dataset.protein || "other";
+      const hide = activeProteinFilter !== "all" && protein !== activeProteinFilter;
+      card.classList.toggle("card--filtered", hide);
+      if (!hide) visible++;
+    }
+    section.style.display = visible === 0 ? "none" : "";
+  }
+}
+
+// Filter button wiring — runs after DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  const heroFilters = document.getElementById("heroFilters");
+  if (!heroFilters) return;
+  heroFilters.addEventListener("click", (e) => {
+    const btn = e.target.closest(".filter-btn");
+    if (!btn) return;
+    activeProteinFilter = btn.dataset.protein;
+    for (const b of heroFilters.querySelectorAll(".filter-btn")) {
+      b.classList.toggle("active", b === btn);
+    }
+    applyFilter();
+  });
+});
 
 function chunkRecipes(items, size) {
   const chunks = [];
@@ -183,6 +227,7 @@ function renderHome() {
       const starButtons = node.querySelectorAll(".star-btn");
 
       card.style.setProperty("--card-index", weekIndex * 7 + i);
+      card.dataset.protein = getProtein(recipe.id);
       if (selectedIds.has(recipe.id)) card.classList.add("is-selected");
 
       day.textContent = dayNames[i] || `Day ${i + 1}`;
@@ -264,6 +309,7 @@ function renderHome() {
     weekSection.appendChild(weekGrid);
     weeksWrap.appendChild(weekSection);
   }
+  applyFilter();
 }
 
 function renderRecipePage(recipe) {
