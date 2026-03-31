@@ -39,6 +39,32 @@ const selectedIds = new Set();
 let latestShoppingMarkdown = "";
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+// ---- Image placeholder helpers ----
+const PLACEHOLDER_GRADIENTS = [
+  ["#c4622d", "#d4a843"],
+  ["#5a7a6e", "#d4a843"],
+  ["#1c2b3a", "#c4622d"],
+  ["#7a4030", "#c4622d"],
+  ["#2d4a3e", "#5a7a6e"],
+  ["#8b4513", "#d4a843"],
+  ["#3d2b1f", "#c4622d"],
+];
+
+function placeholderGradient(title) {
+  let h = 0;
+  for (let i = 0; i < title.length; i++) h = (h * 31 + title.charCodeAt(i)) | 0;
+  const [a, b] = PLACEHOLDER_GRADIENTS[Math.abs(h) % PLACEHOLDER_GRADIENTS.length];
+  return `linear-gradient(135deg, ${a} 0%, ${b} 100%)`;
+}
+
+function makePlaceholder(title, className) {
+  const div = document.createElement("div");
+  div.className = className;
+  div.style.background = placeholderGradient(title);
+  div.textContent = title.charAt(0).toUpperCase();
+  return div;
+}
+
 function escapeHtml(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -137,20 +163,25 @@ function renderHome() {
   for (let weekIndex = 0; weekIndex < weeks.length; weekIndex += 1) {
     const weekSection = document.createElement("section");
     weekSection.className = "week-section";
-    weekSection.innerHTML = `<div class="week-title">Week ${weekIndex + 1}</div><div class="week-theme">Weekly dinner plan</div>`;
+    weekSection.innerHTML = `<div class="week-title-row"><div class="week-title">Week ${weekIndex + 1}</div><div class="week-divider"></div></div>`;
     const weekGrid = document.createElement("div");
     weekGrid.className = "week-grid";
     const weekRecipes = weeks[weekIndex];
     for (let i = 0; i < weekRecipes.length; i += 1) {
       const recipe = weekRecipes[i];
       const node = recipeCardTemplate.content.cloneNode(true);
+      const card = node.querySelector(".card");
       const checkbox = node.querySelector(".recipe-checkbox");
       const day = node.querySelector(".card-day");
-      const image = node.querySelector(".recipe-image");
+      const imageEl = node.querySelector(".recipe-image");
+      const imageWrap = node.querySelector(".card-image-wrap");
       const link = node.querySelector(".recipe-open-link");
       const meta = node.querySelector(".recipe-meta");
       const completeBtn = node.querySelector(".complete-btn");
       const starButtons = node.querySelectorAll(".star-btn");
+
+      card.style.setProperty("--card-index", weekIndex * 7 + i);
+      if (selectedIds.has(recipe.id)) card.classList.add("is-selected");
 
       day.textContent = dayNames[i] || `Day ${i + 1}`;
       link.textContent = recipe.title;
@@ -163,16 +194,22 @@ function renderHome() {
       checkbox.value = recipe.id;
       checkbox.checked = selectedIds.has(recipe.id);
       checkbox.addEventListener("change", () => {
-        if (checkbox.checked) selectedIds.add(recipe.id);
-        else selectedIds.delete(recipe.id);
+        if (checkbox.checked) {
+          selectedIds.add(recipe.id);
+          card.classList.add("is-selected");
+        } else {
+          selectedIds.delete(recipe.id);
+          card.classList.remove("is-selected");
+        }
         updateSelectionUi();
       });
 
       if (recipe.image) {
-        image.src = recipe.image;
-        image.alt = recipe.title;
+        imageEl.src = recipe.image;
+        imageEl.alt = recipe.title;
       } else {
-        image.style.display = "none";
+        imageEl.remove();
+        imageWrap.appendChild(makePlaceholder(recipe.title, "recipe-image-placeholder"));
       }
 
       const metaParts = [];
@@ -229,6 +266,11 @@ function renderHome() {
 
 function renderRecipePage(recipe) {
   activeRecipeId = recipe ? recipe.id : null;
+  // Clean up any previously injected placeholder
+  const staleHolder = document.getElementById("recipePageImagePlaceholder");
+  if (staleHolder) staleHolder.remove();
+  recipePageImage.style.display = "";
+
   if (!recipe) {
     recipePageTitle.textContent = "Recipe not found";
     recipePageMeta.textContent = "This recipe URL does not match any loaded recipe.";
@@ -255,6 +297,9 @@ function renderRecipePage(recipe) {
     recipePageImage.style.display = "block";
   } else {
     recipePageImage.style.display = "none";
+    const ph = makePlaceholder(recipe.title, "recipe-page-image-placeholder");
+    ph.id = "recipePageImagePlaceholder";
+    recipePageImage.insertAdjacentElement("afterend", ph);
   }
 
   recipePageIngredients.innerHTML = "";
@@ -306,8 +351,8 @@ function renderShoppingList(payload) {
   const sections = [];
   for (const category of categories) sections.push(sectionHtml(category, payload.consolidated[category]));
   for (const category of categories) sections.push(sectionHtml(`${category} (As Needed)`, payload.asNeeded[category]));
-  const selected = payload.selected.map((title) => `<span class="chip">${escapeHtml(title)}</span>`).join(" ");
-  shoppingOutput.innerHTML = `<div>${selected || ""}</div>${sections.filter(Boolean).join("") || '<p class="muted">No ingredients found.</p>'}`;
+  const selected = payload.selected.map((title) => `<span class="chip">${escapeHtml(title)}</span>`).join("");
+  shoppingOutput.innerHTML = `<div class="recipe-chips">${selected}</div>${sections.filter(Boolean).join("") || '<p class="muted">No ingredients found.</p>'}`;
   latestShoppingMarkdown = payload.markdown || "";
   savedFile.textContent = payload.savedFile ? `Saved to ${payload.savedFile}` : "List ready to download.";
   updateSelectionUi();

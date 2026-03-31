@@ -3,16 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Family Dinner Planner</title>
+  <title>Arendt Family Dinners</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
   <header class="hero">
-    <h1>Ology Family Dinner Planner</h1>
-    <p>Choose meals by week, open full recipe cards, and generate one shopping list.</p>
+    <div class="hero-inner">
+      <span class="hero-eyebrow">Arendt Family</span>
+      <h1>Dinners</h1>
+      <p>Pick meals for the week, explore full recipes, and generate one shopping list.</p>
+    </div>
   </header>
 
   <div id="homeView">
@@ -105,7 +108,9 @@
 
   <template id="recipeCardTemplate">
     <article class="card">
-      <img class="recipe-image" alt="">
+      <div class="card-image-wrap">
+        <img class="recipe-image" alt="">
+      </div>
       <div class="card-body">
         <div class="card-day"></div>
         <a class="recipe-open-link" href="#"></a>
