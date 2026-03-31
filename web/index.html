@@ -6,7 +6,7 @@
   <title>Arendt Family Dinners</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -14,7 +14,10 @@
     <div class="hero-inner">
       <span class="hero-eyebrow">Arendt Family</span>
       <h1>Dinners</h1>
-      <p>Pick meals for the week, explore full recipes, and generate one shopping list.</p>
+      <div class="hero-rule">
+        <div class="hero-rule-dot"></div>
+      </div>
+      <p>Pick meals for the week, explore full recipes, and build your shopping list.</p>
     </div>
   </header>
 
@@ -22,26 +25,26 @@
     <main class="layout">
       <section class="recipes-panel">
         <div class="panel-head">
-          <h2>Weekly Dinner Layout</h2>
+          <h2>This Week</h2>
           <p id="selectionCount" class="muted">0 selected</p>
         </div>
         <p id="stateHint" class="muted"></p>
         <div id="weeksWrap" class="weeks-wrap">
-          <p class="muted">Loading recipes...</p>
+          <p class="muted">Loading recipes…</p>
         </div>
       </section>
 
       <aside class="sidebar-panel">
-        <div class="actions">
-          <button id="generateBtn" class="btn-primary" disabled>Generate Shopping List</button>
-          <button id="downloadBtn" class="btn-secondary" disabled>Download List</button>
-        </div>
         <div class="panel-head">
           <h2>Shopping List</h2>
-          <p id="savedFile" class="muted">No list generated yet.</p>
+          <p id="savedFile" class="muted">No list yet.</p>
+        </div>
+        <div class="actions">
+          <button id="generateBtn" class="btn-primary" disabled>Generate List</button>
+          <button id="downloadBtn" class="btn-secondary" disabled>Download</button>
         </div>
         <div id="shoppingOutput" class="shopping-output panel-surface">
-          <p class="muted">Select dinners, then tap Generate Shopping List.</p>
+          <p class="muted" style="padding: 10px 2px;">Select dinners above, then tap Generate List.</p>
         </div>
       </aside>
     </main>
@@ -49,22 +52,32 @@
 
   <section id="recipePage" class="recipe-page hidden">
     <div class="recipe-page-wrap">
-      <a id="backToPlanner" class="back-link" href="/">← Back to weekly planner</a>
-      <div class="recipe-url-row">
-        <span class="muted">Recipe URL:</span>
-        <a id="recipePageUrl" href="#" target="_blank" rel="noopener noreferrer"></a>
+
+      <div class="recipe-nav-row">
+        <a id="backToPlanner" class="back-link" href="/">← Back</a>
+        <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+          <div class="recipe-url-row">
+            <span class="muted">Source:</span>
+            <a id="recipePageUrl" href="#" target="_blank" rel="noopener noreferrer"></a>
+          </div>
+          <div class="recipe-url-row">
+            <span class="muted">Mealime:</span>
+            <a id="mealimeImportUrl" href="#" target="_blank" rel="noopener noreferrer"></a>
+          </div>
+        </div>
       </div>
-      <div class="recipe-url-row">
-        <span class="muted">Mealime import URL:</span>
-        <a id="mealimeImportUrl" href="#" target="_blank" rel="noopener noreferrer"></a>
-      </div>
+
       <img id="recipePageImage" class="recipe-page-image" alt="">
+
       <div class="recipe-page-card">
         <div class="modal-head-row">
           <h2 id="recipePageTitle"></h2>
-          <button id="editRecipeBtn" class="btn-secondary" type="button">Edit Recipe</button>
+          <button id="editRecipeBtn" class="btn-secondary" type="button">Edit</button>
         </div>
-        <p id="recipePageMeta" class="muted"></p>
+
+        <div id="recipeStats" class="recipe-stats"></div>
+
+        <p id="recipePageMeta" class="muted" style="display:none;"></p>
 
         <div id="recipeReadView">
           <h3>Ingredients</h3>
@@ -78,7 +91,7 @@
             <input id="editTitle" type="text">
           </label>
           <label>Image URL
-            <input id="editImage" type="text" placeholder="https://...">
+            <input id="editImage" type="text" placeholder="https://…">
           </label>
           <div class="edit-row">
             <label>Servings
@@ -103,6 +116,7 @@
           </div>
         </form>
       </div>
+
     </div>
   </section>
 
@@ -110,6 +124,7 @@
     <article class="card">
       <div class="card-image-wrap">
         <img class="recipe-image" alt="">
+        <div class="card-image-scrim"></div>
       </div>
       <div class="card-body">
         <div class="card-day"></div>
@@ -120,7 +135,7 @@
             <input class="recipe-checkbox" type="checkbox">
             <span>Pick</span>
           </label>
-          <button class="complete-btn" type="button">Mark Complete</button>
+          <button class="complete-btn" type="button">Mark Done</button>
           <div class="stars" role="group" aria-label="Rate recipe">
             <button class="star-btn" type="button" data-rating="1">★</button>
             <button class="star-btn" type="button" data-rating="2">★</button>

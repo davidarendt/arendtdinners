@@ -28,6 +28,7 @@ const editIngredients = document.getElementById("editIngredients");
 const editInstructions = document.getElementById("editInstructions");
 const cancelEditRecipeBtn = document.getElementById("cancelEditRecipeBtn");
 const saveEditRecipeBtn = document.getElementById("saveEditRecipeBtn");
+const recipeStats = document.getElementById("recipeStats");
 
 let recipes = [];
 let recipeById = new Map();
@@ -163,7 +164,8 @@ function renderHome() {
   for (let weekIndex = 0; weekIndex < weeks.length; weekIndex += 1) {
     const weekSection = document.createElement("section");
     weekSection.className = "week-section";
-    weekSection.innerHTML = `<div class="week-title-row"><div class="week-title">Week ${weekIndex + 1}</div><div class="week-divider"></div></div>`;
+    const weekNum = String(weekIndex + 1).padStart(2, "0");
+    weekSection.innerHTML = `<div class="week-bg-num">${weekNum}</div><div class="week-header-row"><h3 class="week-title">Week ${weekIndex + 1}</h3><div class="week-line"></div></div>`;
     const weekGrid = document.createElement("div");
     weekGrid.className = "week-grid";
     const weekRecipes = weeks[weekIndex];
@@ -271,20 +273,33 @@ function renderRecipePage(recipe) {
   if (staleHolder) staleHolder.remove();
   recipePageImage.style.display = "";
 
+  recipeStats.innerHTML = "";
+
   if (!recipe) {
     recipePageTitle.textContent = "Recipe not found";
-    recipePageMeta.textContent = "This recipe URL does not match any loaded recipe.";
     recipePageImage.style.display = "none";
     recipePageIngredients.innerHTML = "";
     recipePageInstructions.innerHTML = "";
     return;
   }
+
   recipePageTitle.textContent = recipe.title;
-  const metaParts = [];
-  if (recipe.servings) metaParts.push(`${recipe.servings} servings`);
-  if (recipe.prepTime) metaParts.push(`Prep: ${recipe.prepTime}`);
-  if (recipe.cookTime) metaParts.push(`Cook: ${recipe.cookTime}`);
-  recipePageMeta.textContent = metaParts.join(" · ");
+
+  // Stat boxes
+  const statDefs = [
+    recipe.servings  && { label: "Servings",   value: recipe.servings },
+    recipe.prepTime  && { label: "Prep time",  value: recipe.prepTime },
+    recipe.cookTime  && { label: "Cook time",  value: recipe.cookTime },
+    recipe.ingredientCount && { label: "Ingredients", value: recipe.ingredientCount },
+  ].filter(Boolean);
+  for (const { label, value } of statDefs) {
+    const div = document.createElement("div");
+    div.className = "recipe-stat";
+    div.innerHTML = `<span class="stat-value">${escapeHtml(String(value))}</span><span class="stat-label">${escapeHtml(label)}</span>`;
+    recipeStats.appendChild(div);
+  }
+  if (!statDefs.length) recipeStats.style.display = "none";
+
   const fullUrl = `${window.location.origin}${recipePath(recipe.id)}`;
   recipePageUrl.href = fullUrl;
   recipePageUrl.textContent = fullUrl;
