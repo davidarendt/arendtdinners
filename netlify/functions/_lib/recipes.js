@@ -283,6 +283,27 @@ function loadRawHtmlRecipes() {
   return results;
 }
 
+function parseIndexHtmlOrder() {
+  const indexFile = path.join(recipesDir(), "index.html");
+  if (!fs.existsSync(indexFile)) return {};
+  const html = fs.readFileSync(indexFile, "utf8");
+  const orderMap = {};
+  let sortKey = 0;
+  const blocks = html.split('<div class="week-card">');
+  for (let i = 1; i < blocks.length; i += 1) {
+    const block = blocks[i];
+    const weekMatch = block.match(/Week\s+(\d+)/);
+    const week = weekMatch ? parseInt(weekMatch[1], 10) : i;
+    const rowRe = /href="([^"]+\.html)"\s+class="meal-row">[\s\S]*?<span\s+class="day">([^<]+)<\/span>/g;
+    let m;
+    while ((m = rowRe.exec(block)) !== null) {
+      const id = m[1].replace(/\.html$/i, "");
+      orderMap[id] = { week, day: m[2].trim(), sortKey: sortKey++ };
+    }
+  }
+  return orderMap;
+}
+
 function loadRecipes() {
   const mdRecipes = loadMarkdownRecipes();
   const htmlRecipes = loadRawHtmlRecipes();
@@ -295,6 +316,20 @@ function loadRecipes() {
     }
     seenTitles.add(titleKey);
     merged.push(recipe);
+  }
+  const orderMap = parseIndexHtmlOrder();
+  if (Object.keys(orderMap).length > 0) {
+    for (const recipe of merged) {
+      const info = orderMap[recipe.id];
+      if (info) {
+        recipe.week = info.week;
+        recipe.day = info.day;
+        recipe._sortKey = info.sortKey;
+      } else {
+        recipe._sortKey = 99999;
+      }
+    }
+    merged.sort((a, b) => (a._sortKey || 99999) - (b._sortKey || 99999));
   }
   return merged;
 }

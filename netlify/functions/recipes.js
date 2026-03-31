@@ -16,15 +16,17 @@ exports.handler = async function handler() {
       const ingredients = Array.isArray(o.ingredients) ? o.ingredients : recipe.ingredients;
       const instructions = Array.isArray(o.instructions) ? o.instructions : recipe.instructions || [];
       return {
-      id: recipe.id,
-      title: o.title || recipe.title,
-      servings: o.servings || recipe.servings,
-      image: o.image || recipe.image,
-      prepTime: o.prepTime || recipe.prepTime || null,
-      cookTime: o.cookTime || recipe.cookTime || null,
-      ingredientCount: ingredients.length,
-      ingredients,
-      instructions,
+        id: recipe.id,
+        title: o.title || recipe.title,
+        week: recipe.week || null,
+        day: recipe.day || null,
+        servings: o.servings || recipe.servings,
+        image: o.image || recipe.image,
+        prepTime: o.prepTime || recipe.prepTime || null,
+        cookTime: o.cookTime || recipe.cookTime || null,
+        ingredientCount: ingredients.length,
+        ingredients,
+        instructions,
       };
     });
     return jsonResponse(200, { recipes });

@@ -9,7 +9,6 @@ const savedFile = document.getElementById("savedFile");
 const recipeCardTemplate = document.getElementById("recipeCardTemplate");
 const stateHint = document.getElementById("stateHint");
 const backToPlanner = document.getElementById("backToPlanner");
-const recipePageUrl = document.getElementById("recipePageUrl");
 const mealimeImportUrl = document.getElementById("mealimeImportUrl");
 const recipePageImage = document.getElementById("recipePageImage");
 const recipePageTitle = document.getElementById("recipePageTitle");
@@ -204,15 +203,25 @@ function renderHome() {
     weeksWrap.innerHTML = '<p class="muted">No dinners found yet in recipe files.</p>';
     return;
   }
-  const weeks = chunkRecipes(recipes, 7);
-  for (let weekIndex = 0; weekIndex < weeks.length; weekIndex += 1) {
+
+  // Group recipes by week, preserving API order within each week
+  const weekMap = new Map();
+  for (const recipe of recipes) {
+    const w = recipe.week || 1;
+    if (!weekMap.has(w)) weekMap.set(w, []);
+    weekMap.get(w).push(recipe);
+  }
+  const weekNums = [...weekMap.keys()].sort((a, b) => a - b);
+
+  let cardIndex = 0;
+  for (const weekNum of weekNums) {
+    const weekRecipes = weekMap.get(weekNum);
     const weekSection = document.createElement("section");
     weekSection.className = "week-section";
-    const weekNum = String(weekIndex + 1).padStart(2, "0");
-    weekSection.innerHTML = `<div class="week-bg-num">${weekNum}</div><div class="week-header-row"><h3 class="week-title">Week ${weekIndex + 1}</h3><div class="week-line"></div></div>`;
+    const weekNumStr = String(weekNum).padStart(2, "0");
+    weekSection.innerHTML = `<div class="week-bg-num">${weekNumStr}</div><div class="week-header-row"><h3 class="week-title">Week ${weekNum}</h3><div class="week-line"></div></div>`;
     const weekGrid = document.createElement("div");
     weekGrid.className = "week-grid";
-    const weekRecipes = weeks[weekIndex];
     for (let i = 0; i < weekRecipes.length; i += 1) {
       const recipe = weekRecipes[i];
       const node = recipeCardTemplate.content.cloneNode(true);
@@ -226,11 +235,11 @@ function renderHome() {
       const completeBtn = node.querySelector(".complete-btn");
       const starButtons = node.querySelectorAll(".star-btn");
 
-      card.style.setProperty("--card-index", weekIndex * 7 + i);
+      card.style.setProperty("--card-index", cardIndex++);
       card.dataset.protein = getProtein(recipe.id);
       if (selectedIds.has(recipe.id)) card.classList.add("is-selected");
 
-      day.textContent = dayNames[i] || `Day ${i + 1}`;
+      day.textContent = recipe.day || dayNames[i] || `Day ${i + 1}`;
       link.textContent = recipe.title;
       link.href = recipePath(recipe.id);
       link.addEventListener("click", (event) => {
@@ -346,9 +355,6 @@ function renderRecipePage(recipe) {
   }
   if (!statDefs.length) recipeStats.style.display = "none";
 
-  const fullUrl = `${window.location.origin}${recipePath(recipe.id)}`;
-  recipePageUrl.href = fullUrl;
-  recipePageUrl.textContent = fullUrl;
   const mealimeUrl = `${window.location.origin}${mealimePath(recipe.id)}`;
   mealimeImportUrl.href = mealimeUrl;
   mealimeImportUrl.textContent = mealimeUrl;
