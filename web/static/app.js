@@ -41,7 +41,8 @@ function renderStars(recipeId) {
     const val = i;
     btn.addEventListener('click', function(e) {
       e.preventDefault();
-      saveRating(recipeId, val);
+      const current = (states[recipeId] || {}).rating || 0;
+      saveRating(recipeId, current === val ? 0 : val);
     });
     wrap.appendChild(btn);
   }
