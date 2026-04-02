@@ -254,7 +254,10 @@ function loadRawHtmlRecipes() {
     const html = fs.readFileSync(abs, "utf8");
     const jsonLd = extractJsonLd(html) || {};
     const id = name.replace(/\.html$/i, "");
-    const title = typeof jsonLd.name === "string" && jsonLd.name.trim() ? jsonLd.name.trim() : id;
+    const rawTitle = typeof jsonLd.name === "string" && jsonLd.name.trim()
+      ? jsonLd.name.trim()
+      : id.replace(/-/g, " ");
+    const title = rawTitle.replace(/\b\w/g, (c) => c.toUpperCase());
     const ingredients = Array.isArray(jsonLd.recipeIngredient)
       ? jsonLd.recipeIngredient.filter((item) => typeof item === "string" && item.trim())
       : [];
