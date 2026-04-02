@@ -35,6 +35,7 @@ exports.handler = async function handler(event) {
 
   const patch = {
     title: toNullableString(body.title),
+    description: toNullableString(body.description),
     image: toNullableString(body.image),
     servings: toNullableString(body.servings),
     prepTime: toNullableString(body.prepTime),

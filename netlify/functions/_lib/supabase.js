@@ -82,7 +82,7 @@ async function fetchRecipeOverrides(recipeIds) {
   if (!quoted) return {};
   const rows = await supabaseRequest(
     "GET",
-    `/rest/v1/recipe_overrides?select=recipe_id,title,image,servings,prep_time,cook_time,ingredients,instructions,updated_at&recipe_id=in.(${encodeURIComponent(
+    `/rest/v1/recipe_overrides?select=recipe_id,title,description,image,servings,prep_time,cook_time,ingredients,instructions,updated_at&recipe_id=in.(${encodeURIComponent(
       quoted
     )})`
   );
@@ -90,6 +90,7 @@ async function fetchRecipeOverrides(recipeIds) {
   for (const row of rows || []) {
     overrides[row.recipe_id] = {
       title: row.title || null,
+      description: row.description || null,
       image: row.image || null,
       servings: row.servings || null,
       prepTime: row.prep_time || null,
@@ -122,6 +123,7 @@ async function upsertRecipeState(recipeId, rating, completed) {
 async function upsertRecipeOverride(recipeId, patch) {
   const payload = { recipe_id: recipeId, updated_at: new Date().toISOString() };
   if (patch.title !== undefined) payload.title = patch.title;
+  if (patch.description !== undefined) payload.description = patch.description;
   if (patch.image !== undefined) payload.image = patch.image;
   if (patch.servings !== undefined) payload.servings = patch.servings;
   if (patch.prepTime !== undefined) payload.prep_time = patch.prepTime;
