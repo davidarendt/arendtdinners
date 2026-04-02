@@ -24,10 +24,10 @@ exports.handler = async function handler(event) {
 
   let rating;
   if (hasRating) {
-    if (!Number.isInteger(body.rating) || body.rating < 1 || body.rating > 5) {
-      return jsonResponse(400, { error: "rating must be an integer between 1 and 5." });
+    if (!Number.isInteger(body.rating) || body.rating < 0 || body.rating > 5) {
+      return jsonResponse(400, { error: "rating must be an integer between 0 and 5." });
     }
-    rating = body.rating;
+    rating = body.rating === 0 ? null : body.rating;
   }
 
   let completed;
