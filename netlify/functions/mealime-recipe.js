@@ -87,7 +87,7 @@ function renderRecipePage(recipe, url) {
 </head>
 <body>
   <main>
-    <a class="top-link" href="/">← Back to planner</a>
+    <a class="top-link" href="/recipes/${htmlEscape(recipe.id)}">← Back to recipe</a>
     <h1>${htmlEscape(recipe.title)}</h1>
     <p class="meta">${meta}</p>
     ${imageTag}

@@ -1,158 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arendt Family Dinners</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Arendt Family Dinners</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header class="hero">
-    <div class="hero-inner">
-      <span class="hero-eyebrow">Arendt Family</span>
-      <h1>Dinners</h1>
-      <div class="hero-rule">
-        <div class="hero-rule-dot"></div>
-      </div>
-      <p>Pick meals for the week, explore full recipes, and build your shopping list.</p>
-      <div class="hero-filters" id="heroFilters">
-        <button class="filter-btn active" data-protein="all">All</button>
-        <button class="filter-btn" data-protein="beef">Beef</button>
-        <button class="filter-btn" data-protein="chicken">Chicken</button>
-        <button class="filter-btn" data-protein="turkey">Turkey</button>
-        <button class="filter-btn" data-protein="pork">Pork</button>
-        <button class="filter-btn" data-protein="lamb">Lamb</button>
-        <button class="filter-btn" data-protein="eggs">Eggs</button>
-        <button class="filter-btn" data-protein="duck">Duck</button>
-        <button class="filter-btn" data-protein="tofu">Tofu</button>
-      </div>
-    </div>
-  </header>
-
-  <div id="homeView">
-    <main class="layout">
-      <section class="recipes-panel">
-        <div class="panel-head">
-          <h2>This Week</h2>
-          <p id="selectionCount" class="muted">0 selected</p>
-        </div>
-        <p id="stateHint" class="muted"></p>
-        <div id="weeksWrap" class="weeks-wrap">
-          <p class="muted">Loading recipes…</p>
-        </div>
-      </section>
-
-      <aside class="sidebar-panel">
-        <div class="panel-head">
-          <h2>Shopping List</h2>
-          <p id="savedFile" class="muted">No list yet.</p>
-        </div>
-        <div class="actions">
-          <button id="generateBtn" class="btn-primary" disabled>Generate List</button>
-          <button id="downloadBtn" class="btn-secondary" disabled>Download</button>
-        </div>
-        <div id="shoppingOutput" class="shopping-output panel-surface">
-          <p class="muted" style="padding: 10px 2px;">Select dinners above, then tap Generate List.</p>
-        </div>
-      </aside>
-    </main>
+<div class="hero">
+  <h1>Arendt Family Dinners</h1>
+  <p>Strict Keto · 6-Week Meal Plan · 42 Dinners</p>
+  <div class="view-tabs">
+    <button class="tab active" data-view="mealplan">Meal Plan</button>
+    <button class="tab" data-view="browse">Browse All</button>
   </div>
-
-  <section id="recipePage" class="recipe-page hidden">
-    <div class="recipe-page-wrap">
-
-      <div class="recipe-nav-row">
-        <a id="backToPlanner" class="back-link" href="/">← Back</a>
-        <div class="recipe-url-row">
-          <span class="muted">Mealime:</span>
-          <a id="mealimeImportUrl" href="#" target="_blank" rel="noopener noreferrer"></a>
-        </div>
-      </div>
-
-      <img id="recipePageImage" class="recipe-page-image" alt="">
-
-      <div class="recipe-page-card">
-        <div class="modal-head-row">
-          <h2 id="recipePageTitle"></h2>
-          <button id="editRecipeBtn" class="btn-secondary" type="button">Edit</button>
-        </div>
-
-        <div id="recipeStats" class="recipe-stats"></div>
-
-        <p id="recipePageMeta" class="muted" style="display:none;"></p>
-
-        <div id="recipeReadView">
-          <h3>Ingredients</h3>
-          <ul id="recipePageIngredients" class="modal-list"></ul>
-          <h3>Instructions</h3>
-          <ol id="recipePageInstructions" class="modal-list"></ol>
-        </div>
-
-        <form id="recipeEditForm" class="edit-form hidden">
-          <label>Title
-            <input id="editTitle" type="text">
-          </label>
-          <label>Image URL
-            <input id="editImage" type="text" placeholder="https://…">
-          </label>
-          <div class="edit-row">
-            <label>Servings
-              <input id="editServings" type="text" placeholder="4">
-            </label>
-            <label>Prep Time
-              <input id="editPrepTime" type="text" placeholder="10 min">
-            </label>
-            <label>Cook Time
-              <input id="editCookTime" type="text" placeholder="25 min">
-            </label>
-          </div>
-          <label>Ingredients (one per line)
-            <textarea id="editIngredients" rows="8"></textarea>
-          </label>
-          <label>Instructions (one per line)
-            <textarea id="editInstructions" rows="8"></textarea>
-          </label>
-          <div class="edit-actions">
-            <button id="cancelEditRecipeBtn" class="btn-secondary" type="button">Cancel</button>
-            <button id="saveEditRecipeBtn" class="btn-primary" type="submit">Save Changes</button>
-          </div>
-        </form>
-      </div>
-
-    </div>
-  </section>
-
-  <template id="recipeCardTemplate">
-    <article class="card">
-      <div class="card-image-wrap">
-        <img class="recipe-image" alt="">
-        <div class="card-image-scrim"></div>
-      </div>
-      <div class="card-body">
-        <div class="card-day"></div>
-        <a class="recipe-open-link" href="#"></a>
-        <p class="recipe-meta"></p>
-        <div class="recipe-state-row">
-          <label class="pick-wrap">
-            <input class="recipe-checkbox" type="checkbox">
-            <span>Pick</span>
-          </label>
-          <button class="complete-btn" type="button">Mark Done</button>
-          <div class="stars" role="group" aria-label="Rate recipe">
-            <button class="star-btn" type="button" data-rating="1">★</button>
-            <button class="star-btn" type="button" data-rating="2">★</button>
-            <button class="star-btn" type="button" data-rating="3">★</button>
-            <button class="star-btn" type="button" data-rating="4">★</button>
-            <button class="star-btn" type="button" data-rating="5">★</button>
-          </div>
-        </div>
-      </div>
-    </article>
-  </template>
-
-  <script src="/static/app.js"></script>
+</div>
+<div class="wrap">
+  <div id="viewMealplan" class="grid"></div>
+  <div id="viewBrowse" class="browse-wrap" hidden></div>
+  <p id="loadingMsg" class="loading-msg">Loading recipes…</p>
+</div>
+<script src="/static/app.js"></script>
 </body>
 </html>

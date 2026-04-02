@@ -37,5 +37,5 @@
 
 [[redirects]]
   from = "/recipes/*"
-  to = "/index.html"
+  to = "/.netlify/functions/recipe-page"
   status = 200

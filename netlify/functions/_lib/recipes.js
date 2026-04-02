@@ -245,7 +245,7 @@ function loadRawHtmlRecipes() {
   if (!fs.existsSync(dir)) return [];
   const files = fs
     .readdirSync(dir)
-    .filter((name) => name.toLowerCase().endsWith(".html"))
+    .filter((name) => name.toLowerCase().endsWith(".html") && name.toLowerCase() !== "index.html")
     .sort();
 
   const results = [];
@@ -284,7 +284,7 @@ function loadRawHtmlRecipes() {
 }
 
 function parseIndexHtmlOrder() {
-  const indexFile = path.join(recipesDir(), "index.html");
+  const indexFile = path.join(rawHtmlDir(), "index.html");
   if (!fs.existsSync(indexFile)) return {};
   const html = fs.readFileSync(indexFile, "utf8");
   const orderMap = {};
@@ -294,11 +294,11 @@ function parseIndexHtmlOrder() {
     const block = blocks[i];
     const weekMatch = block.match(/Week\s+(\d+)/);
     const week = weekMatch ? parseInt(weekMatch[1], 10) : i;
-    const rowRe = /href="([^"]+\.html)"\s+class="meal-row">[\s\S]*?<span\s+class="day">([^<]+)<\/span>/g;
+    const rowRe = /href="([^"]+\.html)"\s+class="meal-row"/g;
     let m;
     while ((m = rowRe.exec(block)) !== null) {
       const id = m[1].replace(/\.html$/i, "");
-      orderMap[id] = { week, day: m[2].trim(), sortKey: sortKey++ };
+      orderMap[id] = { week, sortKey: sortKey++ };
     }
   }
   return orderMap;
@@ -323,7 +323,6 @@ function loadRecipes() {
       const info = orderMap[recipe.id];
       if (info) {
         recipe.week = info.week;
-        recipe.day = info.day;
         recipe._sortKey = info.sortKey;
       } else {
         recipe._sortKey = 99999;
