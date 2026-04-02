@@ -42,6 +42,31 @@ function applyOverrides(html, override) {
       '$1' + override.image.replace(/"/g, '&quot;') + '$2'
     );
   }
+  if (override.ingredients && override.ingredients.length > 0) {
+    const ingItems = override.ingredients.map(item =>
+      `<div class="ing-item"><span class="dot">·</span>${escHtml(item)}</div>`
+    ).join('');
+    html = html.replace(
+      /(<div class="sec-label">Ingredients<\/div>)[\s\S]*?(<\/div>\s*<div>\s*<div class="sec-label">Instructions)/,
+      '$1\n    <div class="ing-group">\n      ' + ingItems + '\n    </div>\n  $2'
+    );
+  }
+  if (override.instructions && override.instructions.length > 0) {
+    const stepsHtml = override.instructions.map((step, i) => {
+      const colonIdx = step.indexOf(': ');
+      let titleHtml = '';
+      let text = step;
+      if (colonIdx > 0 && colonIdx <= 50) {
+        titleHtml = `\n        <div class="step-title">${escHtml(step.slice(0, colonIdx))}</div>`;
+        text = step.slice(colonIdx + 2);
+      }
+      return `    <div class="step">\n      <div class="step-num">${i + 1}</div>\n      <div class="step-content">${titleHtml}\n        <div class="step-text">${escHtml(text)}</div>\n      </div>\n    </div>`;
+    }).join('\n  \n  ');
+    html = html.replace(
+      /(<div class="sec-label">Instructions<\/div>)[\s\S]*?(\s*<\/div>\s*<\/div>\s*<div class="notes-box">)/,
+      '$1\n  ' + stepsHtml + '\n  $2'
+    );
+  }
   return html;
 }
 
@@ -101,6 +126,10 @@ function editPanel(slug, current) {
     <input type="file" id="ef-file" accept="image/*">
     <span id="ef-fname"></span>
     <div id="ef-preview"><img id="ef-preview-img" src="" alt="preview"></div>
+    <label class="ef-label">Ingredients <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:11px;color:#aaa">(one per line)</span></label>
+    <textarea class="ef-textarea" id="ef-ingredients" style="min-height:180px">${escHtml(current.ingredients)}</textarea>
+    <label class="ef-label">Instructions <span style="font-weight:normal;text-transform:none;letter-spacing:0;font-size:11px;color:#aaa">(one per line · "Step Title: text" or just text)</span></label>
+    <textarea class="ef-textarea" id="ef-instructions" style="min-height:180px">${escHtml(current.instructions)}</textarea>
     <div class="ef-row">
       <span id="edit-status"></span>
       <button class="ef-btn ef-cancel" id="ef-cancel">Cancel</button>
@@ -131,11 +160,15 @@ function editPanel(slug, current) {
   function doSave(imageUrl) {
     var title = document.getElementById('ef-title').value.trim();
     var desc = document.getElementById('ef-desc').value.trim();
+    var ingText = document.getElementById('ef-ingredients').value.trim();
+    var instText = document.getElementById('ef-instructions').value.trim();
+    var ingredients = ingText ? ingText.split('\\n').map(function(s){return s.trim();}).filter(Boolean) : null;
+    var instructions = instText ? instText.split('\\n').map(function(s){return s.trim();}).filter(Boolean) : null;
     var btn = document.getElementById('ef-save');
     fetch('/api/recipe-edit', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({recipeId:'${slug}',title:title,description:desc||null,image:imageUrl||null})
+      body: JSON.stringify({recipeId:'${slug}',title:title,description:desc||null,image:imageUrl||null,ingredients:ingredients,instructions:instructions})
     }).then(function(r){ return r.json(); }).then(function(data){
       if(data.error){ status.textContent=data.error; btn.disabled=false; return; }
       status.textContent='Saved!';
@@ -204,10 +237,15 @@ exports.handler = async function(event) {
   const titleMatch = html.match(/<h1[^>]*>([^<]*)<\/h1>/);
   const descMatch = html.match(/<p class="desc">([\s\S]*?)<\/p>/);
   const imgMatch = html.match(/<div class="hero">\s*<img[^>]* src="([^"]*)"/);
+  const ingItemMatches = [...html.matchAll(/<div class="ing-item"><span class="dot">·<\/span>(.*?)<\/div>/g)];
+  const stepTitles = [...html.matchAll(/<div class="step-title">(.*?)<\/div>/g)].map(m => unescHtml(m[1]));
+  const stepTexts = [...html.matchAll(/<div class="step-text">(.*?)<\/div>/g)].map(m => unescHtml(m[1]));
   const current = {
     title: unescHtml(titleMatch ? titleMatch[1] : slug),
     description: unescHtml(descMatch ? descMatch[1] : ''),
     image: unescHtml(imgMatch ? imgMatch[1] : ''),
+    ingredients: ingItemMatches.map(m => unescHtml(m[1])).join('\n'),
+    instructions: stepTexts.map((text, i) => stepTitles[i] ? `${stepTitles[i]}: ${text}` : text).join('\n'),
   };
 
   const mealimeLink = `<div style="max-width:860px;margin:0 auto;padding:0 20px 32px"><div style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(0,0,0,.08);text-align:right"><a href="/mealime/${slug}" style="color:#C4622D;font-size:13px;text-decoration:none;font-family:'DM Sans',sans-serif;letter-spacing:.3px">View Mealime Import Page \u2192</a></div></div>`;
