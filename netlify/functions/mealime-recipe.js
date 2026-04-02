@@ -1,4 +1,5 @@
 const { loadRecipes } = require("./_lib/recipes");
+const { fetchRecipeOverrides } = require("./_lib/supabase");
 
 function htmlEscape(value) {
   return String(value || "")
@@ -122,6 +123,22 @@ exports.handler = async function handler(event) {
       body: "<h1>Recipe not found</h1>",
     };
   }
+
+  // Apply any saved overrides
+  try {
+    const overrides = await fetchRecipeOverrides([recipe.id]);
+    const override = overrides[recipe.id];
+    if (override) {
+      if (override.title) recipe.title = override.title;
+      if (override.image) recipe.image = override.image;
+      if (override.servings) recipe.servings = override.servings;
+      if (override.prepTime) recipe.prepTime = override.prepTime;
+      if (override.cookTime) recipe.cookTime = override.cookTime;
+      if (override.ingredients) recipe.ingredients = override.ingredients;
+      if (override.instructions) recipe.instructions = override.instructions;
+    }
+  } catch (_) {}
+
   const url = event.rawUrl || "";
   return {
     statusCode: 200,
