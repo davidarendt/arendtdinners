@@ -28,6 +28,67 @@ function getProtein(id) {
   return 'other';
 }
 
+function weeksAgo(isoDate) {
+  if (!isoDate) return '';
+  var weeks = Math.floor((Date.now() - new Date(isoDate).getTime()) / 604800000);
+  if (weeks < 1) return 'this week';
+  return weeks + 'w ago';
+}
+
+function renderCooked(recipeId) {
+  var state = states[recipeId] || {};
+  var wrap = document.createElement('span');
+  wrap.className = 'cooked-wrap';
+  wrap.dataset.recipeId = recipeId;
+  var ago = document.createElement('span');
+  ago.className = 'cooked-ago';
+  ago.textContent = state.completedAt ? weeksAgo(state.completedAt) : '';
+  var btn = document.createElement('button');
+  btn.className = 'cooked-btn' + (state.completed ? ' done' : '');
+  btn.title = state.completed ? 'Mark as not cooked' : 'Mark as cooked';
+  btn.textContent = '\u2713';
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    var newVal = !(states[recipeId] || {}).completed;
+    states[recipeId] = Object.assign({}, states[recipeId] || {}, { completed: newVal });
+    if (newVal) states[recipeId].completedAt = new Date().toISOString();
+    updateAllCooked(recipeId);
+    saveCompleted(recipeId, newVal);
+  });
+  wrap.appendChild(ago);
+  wrap.appendChild(btn);
+  return wrap;
+}
+
+function updateAllCooked(recipeId) {
+  var state = states[recipeId] || {};
+  document.querySelectorAll('.cooked-wrap[data-recipe-id="' + recipeId + '"]').forEach(function(wrap) {
+    var btn = wrap.querySelector('.cooked-btn');
+    var ago = wrap.querySelector('.cooked-ago');
+    btn.classList.toggle('done', !!state.completed);
+    btn.title = state.completed ? 'Mark as not cooked' : 'Mark as cooked';
+    ago.textContent = state.completedAt ? weeksAgo(state.completedAt) : '';
+  });
+}
+
+function saveCompleted(recipeId, completed) {
+  var prev = Object.assign({}, states[recipeId] || {});
+  fetch('/api/recipe-state', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ recipeId: recipeId, completed: completed }),
+  }).then(function(res) {
+    return res.json().then(function(data) {
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      states[recipeId] = Object.assign({}, states[recipeId] || {}, data.state);
+      updateAllCooked(recipeId);
+    });
+  }).catch(function() {
+    states[recipeId] = prev;
+    updateAllCooked(recipeId);
+  });
+}
+
 function renderStars(recipeId) {
   const rating = (states[recipeId] || {}).rating || 0;
   const wrap = document.createElement('span');
@@ -51,7 +112,14 @@ function renderStars(recipeId) {
 
 function updateStars(wrap, rating) {
   wrap.querySelectorAll('.star').forEach(function(btn, idx) {
-    btn.classList.toggle('lit', idx < rating);
+    var wasLit = btn.classList.contains('lit');
+    var nowLit = idx < rating;
+    btn.classList.toggle('lit', nowLit);
+    if (nowLit && !wasLit) {
+      btn.classList.remove('pop');
+      void btn.offsetWidth;
+      btn.classList.add('pop');
+    }
   });
 }
 
@@ -88,6 +156,7 @@ function makeRow(recipe) {
   name.className = 'mname';
   name.textContent = recipe.title;
   a.appendChild(name);
+  a.appendChild(renderCooked(recipe.id));
   a.appendChild(renderStars(recipe.id));
   return a;
 }

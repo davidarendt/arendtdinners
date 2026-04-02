@@ -108,7 +108,8 @@ async function upsertRecipeState(recipeId, rating, completed) {
   if (rating !== undefined) payload.rating = rating;
   if (completed !== undefined) {
     payload.completed = completed;
-    payload.completed_at = completed ? new Date().toISOString() : null;
+    if (completed) payload.completed_at = new Date().toISOString();
+    // When uncompleting, leave completed_at intact so "last cooked" date is preserved
   }
   const rows = await supabaseRequest("POST", "/rest/v1/recipe_states?on_conflict=recipe_id", payload);
   const row = (rows || [])[0] || payload;
