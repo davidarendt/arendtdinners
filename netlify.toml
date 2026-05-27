@@ -36,6 +36,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/cook-log"
+  to = "/.netlify/functions/cook-log"
+  status = 200
+
+[[redirects]]
   from = "/recipes/*"
   to = "/.netlify/functions/recipe-page"
   status = 200

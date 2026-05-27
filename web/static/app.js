@@ -41,59 +41,92 @@ function weeksAgo(isoDate) {
   return weeks + 'w ago';
 }
 
-function renderCooked(recipeId) {
+function cookMetaText(state) {
+  var count = state.cookCount || 0;
+  if (count === 0) return '';
+  var ago = weeksAgo(state.lastCookedAt);
+  return count === 1 ? ago : '\xd7' + count + ' \xb7 ' + ago;
+}
+
+function renderCookLog(recipeId) {
   var state = states[recipeId] || {};
+  var count = state.cookCount || 0;
   var wrap = document.createElement('span');
-  wrap.className = 'cooked-wrap';
+  wrap.className = 'cook-wrap';
   wrap.dataset.recipeId = recipeId;
-  var ago = document.createElement('span');
-  ago.className = 'cooked-ago';
-  ago.textContent = state.completedAt ? weeksAgo(state.completedAt) : '';
+  var meta = document.createElement('span');
+  meta.className = 'cook-meta';
+  meta.textContent = cookMetaText(state);
   var btn = document.createElement('button');
-  btn.className = 'cooked-btn' + (state.completed ? ' done' : '');
-  btn.title = state.completed ? 'Mark as not cooked' : 'Mark as cooked';
+  btn.className = 'cook-btn' + (count > 0 ? ' done' : '');
+  btn.title = 'Log as cooked';
   btn.textContent = '\u2713';
   btn.addEventListener('click', function(e) {
     e.preventDefault();
-    var newVal = !(states[recipeId] || {}).completed;
-    states[recipeId] = Object.assign({}, states[recipeId] || {}, { completed: newVal });
-    if (newVal) states[recipeId].completedAt = new Date().toISOString();
-    updateAllCooked(recipeId);
-    saveCompleted(recipeId, newVal);
+    logCookServer(recipeId);
   });
-  wrap.appendChild(ago);
+  var undo = document.createElement('button');
+  undo.className = 'cook-undo';
+  undo.title = 'Undo last cook';
+  undo.textContent = '\u21a9';
+  undo.hidden = count === 0;
+  undo.addEventListener('click', function(e) {
+    e.preventDefault();
+    var lastId = (states[recipeId] || {}).lastCookId;
+    if (lastId) undoCook(recipeId, lastId);
+  });
+  wrap.appendChild(meta);
   wrap.appendChild(btn);
+  wrap.appendChild(undo);
   return wrap;
 }
 
-function updateAllCooked(recipeId) {
+function updateAllCookLog(recipeId) {
   var state = states[recipeId] || {};
-  document.querySelectorAll('.cooked-wrap[data-recipe-id="' + recipeId + '"]').forEach(function(wrap) {
-    var btn = wrap.querySelector('.cooked-btn');
-    var ago = wrap.querySelector('.cooked-ago');
-    btn.classList.toggle('done', !!state.completed);
-    btn.title = state.completed ? 'Mark as not cooked' : 'Mark as cooked';
-    ago.textContent = state.completedAt ? weeksAgo(state.completedAt) : '';
+  var count = state.cookCount || 0;
+  document.querySelectorAll('.cook-wrap[data-recipe-id="' + recipeId + '"]').forEach(function(wrap) {
+    wrap.querySelector('.cook-meta').textContent = cookMetaText(state);
+    wrap.querySelector('.cook-btn').classList.toggle('done', count > 0);
+    var undo = wrap.querySelector('.cook-undo');
+    if (undo) undo.hidden = count === 0;
   });
   updateAllTeddy(recipeId);
 }
 
-function saveCompleted(recipeId, completed) {
-  var prev = Object.assign({}, states[recipeId] || {});
-  fetch('/api/recipe-state', {
+function logCookServer(recipeId) {
+  fetch('/api/cook-log', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ recipeId: recipeId, completed: completed }),
+    body: JSON.stringify({ recipeId: recipeId }),
   }).then(function(res) {
     return res.json().then(function(data) {
       if (!res.ok) throw new Error(data.error || 'Failed');
-      states[recipeId] = Object.assign({}, states[recipeId] || {}, data.state);
-      updateAllCooked(recipeId);
+      states[recipeId] = Object.assign({}, states[recipeId] || {}, {
+        cookCount: data.cookCount,
+        lastCookedAt: data.lastCookedAt,
+        lastCookId: data.lastCookId,
+      });
+      updateAllCookLog(recipeId);
     });
-  }).catch(function() {
-    states[recipeId] = prev;
-    updateAllCooked(recipeId);
-  });
+  }).catch(function(err) { console.error(err); });
+}
+
+function undoCook(recipeId, id) {
+  fetch('/api/cook-log', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, recipeId: recipeId }),
+  }).then(function(res) {
+    return res.json().then(function(data) {
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      states[recipeId] = Object.assign({}, states[recipeId] || {}, {
+        cookCount: data.cookCount,
+        lastCookedAt: data.lastCookedAt,
+        lastCookId: data.lastCookId,
+      });
+      updateAllCookLog(recipeId);
+    });
+  }).catch(function(err) { console.error(err); });
 }
 
 function renderStars(recipeId) {
@@ -161,7 +194,7 @@ function renderTeddy(recipeId) {
   btn.dataset.recipeId = recipeId;
   btn.title = state.teddyApproved ? 'Kid Friendly — click to clear' : 'Kid Friendly?';
   btn.textContent = 'K';
-  if (!state.completed) btn.disabled = true;
+  if (!(state.cookCount > 0)) btn.disabled = true;
   btn.addEventListener('click', function(e) {
     e.preventDefault();
     var newVal = !(states[recipeId] || {}).teddyApproved;
@@ -176,7 +209,7 @@ function updateAllTeddy(recipeId) {
   var state = states[recipeId] || {};
   document.querySelectorAll('.teddy-btn[data-recipe-id="' + recipeId + '"]').forEach(function(btn) {
     btn.classList.toggle('approved', !!state.teddyApproved);
-    btn.disabled = !state.completed;
+    btn.disabled = !(state.cookCount > 0);
     btn.title = state.teddyApproved ? 'Kid Friendly — click to clear' : 'Kid Friendly?';
   });
 }
@@ -261,7 +294,7 @@ function makeRow(recipe) {
   name.className = 'mname';
   name.textContent = recipe.title;
   a.appendChild(name);
-  a.appendChild(renderCooked(recipe.id));
+  a.appendChild(renderCookLog(recipe.id));
   a.appendChild(renderTeddy(recipe.id));
   a.appendChild(renderEase(recipe.id));
   a.appendChild(renderStars(recipe.id));

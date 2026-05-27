@@ -127,6 +127,41 @@ async function upsertRecipeState(recipeId, { rating, completed, teddyApproved, e
   };
 }
 
+async function fetchCookLog(recipeIds) {
+  if (!recipeIds.length) return {};
+  const quoted = recipeIds
+    .map((id) => id.replace(/[^a-zA-Z0-9_.-]/g, ""))
+    .filter(Boolean)
+    .map((id) => `"${id}"`)
+    .join(",");
+  if (!quoted) return {};
+  const rows = await supabaseRequest(
+    "GET",
+    `/rest/v1/cook_log?select=id,recipe_id,cooked_at&recipe_id=in.(${encodeURIComponent(quoted)})&order=cooked_at.desc`
+  );
+  const log = {};
+  for (const row of rows || []) {
+    if (!log[row.recipe_id]) {
+      log[row.recipe_id] = { count: 0, lastCookedAt: row.cooked_at, lastCookId: row.id };
+    }
+    log[row.recipe_id].count++;
+  }
+  return log;
+}
+
+async function logCook(recipeId) {
+  const rows = await supabaseRequest("POST", "/rest/v1/cook_log", {
+    recipe_id: recipeId,
+    cooked_at: new Date().toISOString(),
+  });
+  return (rows || [])[0] || null;
+}
+
+async function deleteLastCook(id) {
+  const safeId = id.replace(/[^a-zA-Z0-9-]/g, "");
+  await supabaseRequest("DELETE", `/rest/v1/cook_log?id=eq.${encodeURIComponent(safeId)}`);
+}
+
 async function upsertRecipeOverride(recipeId, patch) {
   const payload = { recipe_id: recipeId, updated_at: new Date().toISOString() };
   if (patch.title !== undefined) payload.title = patch.title;
@@ -153,9 +188,12 @@ async function upsertRecipeOverride(recipeId, patch) {
 }
 
 module.exports = {
+  deleteLastCook,
+  fetchCookLog,
   fetchRecipeOverrides,
   fetchRecipeStates,
   jsonResponse,
+  logCook,
   upsertRecipeOverride,
   upsertRecipeState,
 };

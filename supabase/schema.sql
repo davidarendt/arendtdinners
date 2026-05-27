@@ -24,6 +24,23 @@ for insert
 to anon
 with check (true);
 
+create table if not exists public.cook_log (
+  id uuid primary key default gen_random_uuid(),
+  recipe_id text not null,
+  cooked_at timestamptz not null default now()
+);
+
+alter table public.cook_log enable row level security;
+
+drop policy if exists "Allow anon read cook_log" on public.cook_log;
+create policy "Allow anon read cook_log" on public.cook_log for select to anon using (true);
+
+drop policy if exists "Allow anon insert cook_log" on public.cook_log;
+create policy "Allow anon insert cook_log" on public.cook_log for insert to anon with check (true);
+
+drop policy if exists "Allow anon delete cook_log" on public.cook_log;
+create policy "Allow anon delete cook_log" on public.cook_log for delete to anon using (true);
+
 create table if not exists public.recipe_overrides (
   recipe_id text primary key,
   title text,
