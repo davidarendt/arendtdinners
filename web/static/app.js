@@ -1,16 +1,16 @@
 const WEEKS = {
-  1: { bg: '#1F4E79', label: 'Week 1 \u2014 Mediterranean & American' },
-  2: { bg: '#375623', label: 'Week 2 \u2014 Korean & Bold' },
-  3: { bg: '#843C0C', label: 'Week 3 \u2014 Comfort & Global' },
-  4: { bg: '#4A235A', label: 'Week 4 \u2014 Global Tour' },
-  5: { bg: '#7B241C', label: 'Week 5 \u2014 Smoky & Rich' },
-  6: { bg: '#0D6E54', label: 'Week 6 \u2014 Finish Strong' },
-  7: { bg: '#1F4E79', label: 'Week 7 \u2014 Italian & Global' },
-  8: { bg: '#843C0C', label: 'Week 8 \u2014 Mexican & Bold' },
-  9: { bg: '#375623', label: 'Week 9 \u2014 Smoky & Hearty' },
-  10: { bg: '#4A235A', label: 'Week 10 \u2014 Mediterranean & Rich' },
-  11: { bg: '#7B241C', label: 'Week 11 \u2014 Global & Bold' },
-  12: { bg: '#0D6E54', label: 'Week 12 \u2014 Finish Strong' },
+  1: { bg: '#1F4E79', label: 'Week 1' },
+  2: { bg: '#375623', label: 'Week 2' },
+  3: { bg: '#843C0C', label: 'Week 3' },
+  4: { bg: '#4A235A', label: 'Week 4' },
+  5: { bg: '#7B241C', label: 'Week 5' },
+  6: { bg: '#0D6E54', label: 'Week 6' },
+  7: { bg: '#1F4E79', label: 'Week 7' },
+  8: { bg: '#843C0C', label: 'Week 8' },
+  9: { bg: '#375623', label: 'Week 9' },
+  10: { bg: '#4A235A', label: 'Week 10' },
+  11: { bg: '#7B241C', label: 'Week 11' },
+  12: { bg: '#0D6E54', label: 'Week 12' },
 };
 
 const PROTEINS = ['all', 'beef', 'chicken', 'turkey', 'pork', 'lamb', 'eggs', 'duck', 'tofu'];
