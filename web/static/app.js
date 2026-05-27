@@ -159,8 +159,8 @@ function renderTeddy(recipeId) {
   var btn = document.createElement('button');
   btn.className = 'teddy-btn' + (state.teddyApproved ? ' approved' : '');
   btn.dataset.recipeId = recipeId;
-  btn.title = state.teddyApproved ? 'Teddy approved — click to clear' : 'Teddy approved?';
-  btn.textContent = 'T';
+  btn.title = state.teddyApproved ? 'Kid Friendly — click to clear' : 'Kid Friendly?';
+  btn.textContent = 'K';
   if (!state.completed) btn.disabled = true;
   btn.addEventListener('click', function(e) {
     e.preventDefault();
@@ -177,7 +177,7 @@ function updateAllTeddy(recipeId) {
   document.querySelectorAll('.teddy-btn[data-recipe-id="' + recipeId + '"]').forEach(function(btn) {
     btn.classList.toggle('approved', !!state.teddyApproved);
     btn.disabled = !state.completed;
-    btn.title = state.teddyApproved ? 'Teddy approved — click to clear' : 'Teddy approved?';
+    btn.title = state.teddyApproved ? 'Kid Friendly — click to clear' : 'Kid Friendly?';
   });
 }
 
@@ -358,6 +358,8 @@ function init() {
     states = results[1].states || {};
     var msg = document.getElementById('loadingMsg');
     if (msg) msg.remove();
+    var countEl = document.getElementById('dinnerCount');
+    if (countEl) countEl.textContent = recipes.reduce(function(sum, r) { return sum + (r.weeks ? r.weeks.length : 0); }, 0);
     renderMealPlan();
     renderBrowse();
     showView('mealplan');
