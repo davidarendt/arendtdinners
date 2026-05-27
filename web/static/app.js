@@ -34,100 +34,6 @@ function getProtein(id) {
   return 'other';
 }
 
-function weeksAgo(isoDate) {
-  if (!isoDate) return '';
-  var weeks = Math.floor((Date.now() - new Date(isoDate).getTime()) / 604800000);
-  if (weeks < 1) return 'this week';
-  return weeks + 'w ago';
-}
-
-function cookMetaText(state) {
-  var count = state.cookCount || 0;
-  if (count === 0) return '';
-  var ago = weeksAgo(state.lastCookedAt);
-  return count === 1 ? ago : '\xd7' + count + ' \xb7 ' + ago;
-}
-
-function renderCookLog(recipeId) {
-  var state = states[recipeId] || {};
-  var count = state.cookCount || 0;
-  var wrap = document.createElement('span');
-  wrap.className = 'cook-wrap';
-  wrap.dataset.recipeId = recipeId;
-  var meta = document.createElement('span');
-  meta.className = 'cook-meta';
-  meta.textContent = cookMetaText(state);
-  var btn = document.createElement('button');
-  btn.className = 'cook-btn' + (count > 0 ? ' done' : '');
-  btn.title = 'Log as cooked';
-  btn.textContent = '\u2713';
-  btn.addEventListener('click', function(e) {
-    e.preventDefault();
-    logCookServer(recipeId);
-  });
-  var undo = document.createElement('button');
-  undo.className = 'cook-undo';
-  undo.title = 'Undo last cook';
-  undo.textContent = '\u21a9';
-  undo.hidden = count === 0;
-  undo.addEventListener('click', function(e) {
-    e.preventDefault();
-    var lastId = (states[recipeId] || {}).lastCookId;
-    if (lastId) undoCook(recipeId, lastId);
-  });
-  wrap.appendChild(meta);
-  wrap.appendChild(btn);
-  wrap.appendChild(undo);
-  return wrap;
-}
-
-function updateAllCookLog(recipeId) {
-  var state = states[recipeId] || {};
-  var count = state.cookCount || 0;
-  document.querySelectorAll('.cook-wrap[data-recipe-id="' + recipeId + '"]').forEach(function(wrap) {
-    wrap.querySelector('.cook-meta').textContent = cookMetaText(state);
-    wrap.querySelector('.cook-btn').classList.toggle('done', count > 0);
-    var undo = wrap.querySelector('.cook-undo');
-    if (undo) undo.hidden = count === 0;
-  });
-  updateAllTeddy(recipeId);
-}
-
-function logCookServer(recipeId) {
-  fetch('/api/cook-log', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ recipeId: recipeId }),
-  }).then(function(res) {
-    return res.json().then(function(data) {
-      if (!res.ok) throw new Error(data.error || 'Failed');
-      states[recipeId] = Object.assign({}, states[recipeId] || {}, {
-        cookCount: data.cookCount,
-        lastCookedAt: data.lastCookedAt,
-        lastCookId: data.lastCookId,
-      });
-      updateAllCookLog(recipeId);
-    });
-  }).catch(function(err) { console.error(err); });
-}
-
-function undoCook(recipeId, id) {
-  fetch('/api/cook-log', {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id: id, recipeId: recipeId }),
-  }).then(function(res) {
-    return res.json().then(function(data) {
-      if (!res.ok) throw new Error(data.error || 'Failed');
-      states[recipeId] = Object.assign({}, states[recipeId] || {}, {
-        cookCount: data.cookCount,
-        lastCookedAt: data.lastCookedAt,
-        lastCookId: data.lastCookId,
-      });
-      updateAllCookLog(recipeId);
-    });
-  }).catch(function(err) { console.error(err); });
-}
 
 function renderStars(recipeId) {
   const rating = (states[recipeId] || {}).rating || 0;
@@ -194,7 +100,6 @@ function renderTeddy(recipeId) {
   btn.dataset.recipeId = recipeId;
   btn.title = state.teddyApproved ? 'Kid Friendly — click to clear' : 'Kid Friendly?';
   btn.textContent = 'K';
-  if (!(state.cookCount > 0)) btn.disabled = true;
   btn.addEventListener('click', function(e) {
     e.preventDefault();
     var newVal = !(states[recipeId] || {}).teddyApproved;
@@ -209,7 +114,6 @@ function updateAllTeddy(recipeId) {
   var state = states[recipeId] || {};
   document.querySelectorAll('.teddy-btn[data-recipe-id="' + recipeId + '"]').forEach(function(btn) {
     btn.classList.toggle('approved', !!state.teddyApproved);
-    btn.disabled = !(state.cookCount > 0);
     btn.title = state.teddyApproved ? 'Kid Friendly — click to clear' : 'Kid Friendly?';
   });
 }
@@ -298,7 +202,6 @@ function makeRow(recipe) {
   ratings.appendChild(renderEase(recipe.id));
   ratings.appendChild(renderStars(recipe.id));
   a.appendChild(name);
-  a.appendChild(renderCookLog(recipe.id));
   a.appendChild(ratings);
   return a;
 }
