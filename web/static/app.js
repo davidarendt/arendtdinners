@@ -244,6 +244,7 @@ function renderEase(recipeId) {
     btn.className = 'ease-btn' + (i === ease ? ' lit' : '');
     btn.textContent = EASE_LABELS[i];
     btn.title = EASE_LABELS[i];
+    btn.dataset.short = ['E','M','H'][i-1];
     var val = i;
     btn.addEventListener('click', (function(v) {
       return function(e) {
@@ -293,11 +294,14 @@ function makeRow(recipe) {
   var name = document.createElement('span');
   name.className = 'mname';
   name.textContent = recipe.title;
+  var ratings = document.createElement('span');
+  ratings.className = 'row-ratings';
+  ratings.appendChild(renderTeddy(recipe.id));
+  ratings.appendChild(renderEase(recipe.id));
+  ratings.appendChild(renderStars(recipe.id));
   a.appendChild(name);
   a.appendChild(renderCookLog(recipe.id));
-  a.appendChild(renderTeddy(recipe.id));
-  a.appendChild(renderEase(recipe.id));
-  a.appendChild(renderStars(recipe.id));
+  a.appendChild(ratings);
   return a;
 }
 
